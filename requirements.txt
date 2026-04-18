@@ -1,0 +1,6 @@
+numpy>=1.24
+scipy>=1.10
+matplotlib>=3.7
+shapely>=2.0
+# Optional, only needed for examples/us_states.py and io_utils.read_geodataframe:
+#   geopandas>=0.14

@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.DS_Store
+
+# Runtime artefacts
+examples/output/
+examples/data/
+*.png
+!docs/**/*.png
+
+# Editors
+.idea/
+.vscode/
