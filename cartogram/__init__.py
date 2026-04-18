@@ -18,6 +18,20 @@ __all__ = [
     "Cartogram",
     "advect_points",
     "rasterize_polygons",
+    "WorldMap",
+    "warp_image",
 ]
+
+
+def __getattr__(name: str):
+    # Lazy-load the optional GeoPandas-dependent surface so the core
+    # package stays importable in environments without the GIS stack.
+    if name == "WorldMap":
+        from .world_data import WorldMap
+        return WorldMap
+    if name == "warp_image":
+        from .warp import warp_image
+        return warp_image
+    raise AttributeError(f"module 'cartogram' has no attribute {name!r}")
 
 __version__ = "0.1.0"

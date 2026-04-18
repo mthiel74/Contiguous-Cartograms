@@ -107,6 +107,14 @@ class Cartogram:
         self._final_grid_points = moved
 
     # ------------------------------------------------------------------
+    def inverse_transform(self, points: np.ndarray) -> np.ndarray:
+        """Inverse of :meth:`transform`. Defers to :mod:`cartogram.warp`."""
+        from .warp import _inverse_transform
+        points = np.asarray(points, dtype=float)
+        if points.ndim != 2 or points.shape[1] != 2:
+            raise ValueError("points must have shape (N, 2)")
+        return _inverse_transform(self, points)
+
     def transform(self, points: np.ndarray) -> np.ndarray:
         """Map ``points`` from original to cartogram coordinates.
 
@@ -131,16 +139,29 @@ class Cartogram:
         return out
 
     # ------------------------------------------------------------------
-    def transform_polygons(self, polygons: Sequence) -> List:
+    def transform_polygons(
+        self,
+        polygons: Sequence,
+        max_edge: float | None = None,
+    ) -> List:
         """Apply :meth:`transform` to a sequence of shapely polygons.
 
-        Returns a new list of polygons; the originals are untouched. Holes
-        are preserved. Because the deformation is a homeomorphism, the
-        topology of each polygon is preserved (no self-intersection on
-        well-resolved inputs).
+        Long boundary edges are first densified so that, after
+        deformation, the polygon boundary follows the cartogram flow
+        smoothly rather than jumping across high-gradient regions in a
+        single straight step. ``max_edge`` sets the densification
+        threshold in physical units; the default is one grid cell.
+
+        Because the deformation is a homeomorphism, the topology of each
+        polygon is preserved (no self-intersection on well-resolved
+        inputs). Holes are preserved.
         """
         from shapely.geometry import Polygon, MultiPolygon
         from shapely.geometry.polygon import orient
+        from shapely import segmentize
+
+        if max_edge is None:
+            max_edge = min(self.solver.dx, self.solver.dy)
 
         def _transform_ring(coords: Iterable[Tuple[float, float]]) -> list:
             arr = np.asarray(list(coords), dtype=float)
@@ -157,10 +178,11 @@ class Cartogram:
 
         out = []
         for geom in polygons:
-            if isinstance(geom, MultiPolygon):
-                out.append(MultiPolygon([_transform_one(p) for p in geom.geoms]))
-            elif isinstance(geom, Polygon):
-                out.append(_transform_one(geom))
+            dense = segmentize(geom, max_edge)
+            if isinstance(dense, MultiPolygon):
+                out.append(MultiPolygon([_transform_one(p) for p in dense.geoms]))
+            elif isinstance(dense, Polygon):
+                out.append(_transform_one(dense))
             else:
                 raise TypeError(
                     f"expected Polygon or MultiPolygon, got {type(geom).__name__}"
