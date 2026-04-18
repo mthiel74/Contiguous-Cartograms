@@ -40,9 +40,18 @@ The package ships with:
 
 ![World GDP cartogram](docs/images/world_gdp.png)
 
-### World — area ∝ GDP per capita (log-scaled)
+### World — area ∝ GDP per capita
 
 ![World GDP-per-capita cartogram](docs/images/world_gdp_per_capita.png)
+
+Note: this image is produced *without* `--log`. Log-scaling a heavy-tailed
+quantity like GDP/capita compresses the $240–$125 000 spread into the
+6–12 range, which is then barely distinguishable from the per-cell area
+noise and lets the cartogram inflate regions with large area rather
+than high value. For GDP/capita, raw values + a small `--min-floor`
+reproduces the expected picture (Europe / North America / Australia
+expanded; sub-Saharan Africa, South Asia, parts of Southeast Asia
+shrunk).
 
 ### World — population cartogram with Natural Earth shaded relief warped through the same deformation
 
@@ -262,7 +271,7 @@ warped = warp_image(cart, img, image_bbox=bbox)
 python -m cartogram world --value population --preserve-oceans --out pop.png
 python -m cartogram world --value gdp --preserve-oceans --out gdp.png
 python -m cartogram world --value gdp_per_capita \
-                          --log --min-floor 0.05 --preserve-oceans --out gpc.png
+                          --min-floor 0.1 --preserve-oceans --out gpc.png
 
 # Any CSV with ISO_A3 + value columns:
 python -m cartogram world --value custom \
