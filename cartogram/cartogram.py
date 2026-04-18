@@ -36,11 +36,19 @@ class Cartogram:
         Background fraction added to every cell, expressed as a multiple
         of the mean of the input density. ``0.0`` would produce infinite
         velocities in empty cells. Default ``0.005`` follows the paper.
+    blur_sigma : float
+        Standard deviation (in grid cells) of a Gaussian pre-smoothing
+        applied to the density. Mathematically equivalent to starting
+        the heat equation at t = sigma² dx dy / 2; practically, it
+        regularises the near-step discontinuities produced by polygon
+        rasterisation so the advection ODE is non-stiff at t = 0.
+        Default ``1.0``.
     """
 
     rho: np.ndarray
     bbox: BBox
     mean_floor: float = 0.005
+    blur_sigma: float = 1.0
 
     solver: DiffusionSolver = field(init=False, repr=False)
     _final_grid_points: np.ndarray | None = field(default=None, init=False, repr=False)
@@ -59,6 +67,12 @@ class Cartogram:
             raise ValueError("input density is identically zero")
         rho_prepared = rho + floor
 
+        if self.blur_sigma > 0:
+            from scipy.ndimage import gaussian_filter
+            rho_prepared = gaussian_filter(
+                rho_prepared, sigma=self.blur_sigma, mode="reflect"
+            )
+
         self.rho = rho_prepared
         self.solver = DiffusionSolver(rho_prepared, self.bbox)
 
@@ -66,8 +80,9 @@ class Cartogram:
     def run(
         self,
         tol: float = 1e-3,
-        rtol: float = 1e-6,
-        atol: float = 1e-9,
+        rtol: float = 1e-5,
+        atol: float = 1e-7,
+        method: str = "RK45",
     ) -> None:
         """Precompute the deformation of the grid itself.
 
@@ -86,6 +101,7 @@ class Cartogram:
             t_max=t_max,
             rtol=rtol,
             atol=atol,
+            method=method,
         )
         moved = clamp_to_bbox(moved, self.bbox)
         self._final_grid_points = moved

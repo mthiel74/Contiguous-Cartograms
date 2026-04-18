@@ -74,9 +74,10 @@ def advect_points(
     solver: DiffusionSolver,
     points: np.ndarray,
     t_max: float | None = None,
-    rtol: float = 1e-6,
-    atol: float = 1e-9,
+    rtol: float = 1e-5,
+    atol: float = 1e-7,
     max_step: float | None = None,
+    method: str = "RK45",
 ) -> np.ndarray:
     """Flow ``points`` through the diffusion-induced velocity field.
 
@@ -93,6 +94,11 @@ def advect_points(
     max_step : float, optional
         Maximum RK step. Defaults to ``t_max / 64``, which keeps the time
         resolution comparable to the grid’s finest resolvable mode.
+    method : str
+        Integrator passed to ``scipy.integrate.solve_ivp``. Defaults to
+        ``"LSODA"`` which tolerates the near-singular velocity field that
+        arises when the input density has sharp contrasts; ``"RK45"`` is
+        fine for well-smoothed densities.
 
     Returns
     -------
@@ -132,7 +138,7 @@ def advect_points(
         rhs,
         (0.0, t_max),
         y0,
-        method="RK45",
+        method=method,
         rtol=rtol,
         atol=atol,
         max_step=max_step,
