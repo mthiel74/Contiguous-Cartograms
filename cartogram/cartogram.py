@@ -43,12 +43,23 @@ class Cartogram:
         regularises the near-step discontinuities produced by polygon
         rasterisation so the advection ODE is non-stiff at t = 0.
         Default ``1.0``.
+    sea_density : float | "auto" | None
+        If set, cells with zero input density (i.e. the ocean) are
+        filled with this value before diffusion. ``"auto"`` fills them
+        with the mean density of the non-zero (land) cells — which
+        approximately preserves ocean area, because then the spatial
+        mean of `ρ` is the same on land and sea and the deformation
+        only redistributes material *within* the land. A custom float
+        interpolates between the two regimes: higher values compress
+        land more, lower values expand land more.
+        Default ``None`` (no ocean fill; legacy behaviour).
     """
 
     rho: np.ndarray
     bbox: BBox
     mean_floor: float = 0.005
     blur_sigma: float = 1.0
+    sea_density: float | str | None = None
 
     solver: DiffusionSolver = field(init=False, repr=False)
     _final_grid_points: np.ndarray | None = field(default=None, init=False, repr=False)
@@ -62,10 +73,28 @@ class Cartogram:
         if self.mean_floor <= 0:
             raise ValueError("mean_floor must be strictly positive")
 
-        floor = self.mean_floor * float(rho.mean())
-        if floor == 0.0:
-            raise ValueError("input density is identically zero")
-        rho_prepared = rho + floor
+        if self.sea_density is not None:
+            land_mask = rho > 0
+            if not land_mask.any():
+                raise ValueError("input density is identically zero")
+            if isinstance(self.sea_density, str):
+                if self.sea_density != "auto":
+                    raise ValueError(
+                        "sea_density must be a float, 'auto', or None"
+                    )
+                ocean_val = float(rho[land_mask].mean())
+            else:
+                ocean_val = float(self.sea_density)
+            rho_prepared = np.where(land_mask, rho, ocean_val)
+            # A tiny mean_floor is still useful to guarantee positivity
+            # for solver robustness, but it can be much smaller here
+            # because the ocean is no longer near-zero.
+            rho_prepared = rho_prepared + self.mean_floor * float(rho_prepared.mean())
+        else:
+            floor = self.mean_floor * float(rho.mean())
+            if floor == 0.0:
+                raise ValueError("input density is identically zero")
+            rho_prepared = rho + floor
 
         if self.blur_sigma > 0:
             from scipy.ndimage import gaussian_filter

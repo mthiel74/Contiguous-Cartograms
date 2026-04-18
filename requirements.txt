@@ -2,5 +2,13 @@ numpy>=1.24
 scipy>=1.10
 matplotlib>=3.7
 shapely>=2.0
-# Optional, only needed for examples/us_states.py and io_utils.read_geodataframe:
+
+# Optional — enables the world-map examples and the CLI's "world" subcommand:
 #   geopandas>=0.14
+#   rasterio>=1.3        # for reading Natural Earth shaded-relief TIFFs
+#   pyproj>=3.6          # pulled in by geopandas
+#   pillow>=9.0
+
+# Optional — needed only for the Gradio GUI ("python -m cartogram gui"):
+#   gradio>=4.0
+#   pandas>=2.0

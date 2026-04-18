@@ -91,6 +91,8 @@ def main() -> None:
     parser.add_argument("--log", action="store_true")
     parser.add_argument("--min-floor", type=float, default=None)
     parser.add_argument("--out", default=None)
+    parser.add_argument("--no-preserve-oceans", action="store_true",
+                        help="Disable ocean-area preservation (default is on).")
     args = parser.parse_args()
 
     tif = _ensure_raster()
@@ -122,7 +124,10 @@ def main() -> None:
     nx = int(args.grid)
     ny = max(16, int(round(args.grid / aspect)))
     rho = rasterize_polygons(list(gdf.geometry), list(gdf["_cart"]), bbox, (ny, nx), subpixel=2)
-    cart = Cartogram(rho, bbox=bbox, mean_floor=0.02, blur_sigma=1.5)
+    cart = Cartogram(
+        rho, bbox=bbox, mean_floor=0.02, blur_sigma=1.5,
+        sea_density=None if args.no_preserve_oceans else "auto",
+    )
     print(f"advecting {ny*nx} grid points ...", flush=True)
     cart.run(tol=3e-3)
 

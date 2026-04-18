@@ -94,6 +94,13 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Apply log1p scaling to the value column before rasterising. "
         "Produces gentler deformations for heavy-tailed quantities.",
     )
+    w.add_argument(
+        "--preserve-oceans",
+        action="store_true",
+        help="Fill ocean cells with the mean land density so that ocean "
+        "area is approximately preserved; land masses are only resized "
+        "relative to each other.",
+    )
 
     s = sub.add_parser("shape", help="Cartogram from an arbitrary shapefile.")
     s.add_argument("path", help="Shapefile or other geopandas-readable file.")
@@ -107,12 +114,19 @@ def _build_parser() -> argparse.ArgumentParser:
     s.add_argument("--out", required=True)
     s.add_argument("--dpi", type=int, default=160)
     s.add_argument("--title", default=None)
+    s.add_argument("--preserve-oceans", action="store_true")
+
+    g = sub.add_parser("gui", help="Launch the Gradio web interface.")
+    g.add_argument("--host", default="127.0.0.1")
+    g.add_argument("--port", type=int, default=7860)
+    g.add_argument("--share", action="store_true",
+                   help="Expose via a temporary gradio.live tunnel.")
 
     return p
 
 
 # ----------------------------------------------------------------------
-def _build_cartogram(gdf, value_col: str, bbox, grid: int):
+def _build_cartogram(gdf, value_col: str, bbox, grid: int, preserve_oceans: bool = False):
     from .cartogram import Cartogram
     from .rasterize import rasterize_polygons
 
@@ -129,7 +143,13 @@ def _build_cartogram(gdf, value_col: str, bbox, grid: int):
     polys = list(gdf.geometry)
     values = [float(v) for v in gdf[value_col].to_numpy()]
     rho = rasterize_polygons(polys, values, bbox, (ny, nx), subpixel=2)
-    cart = Cartogram(rho, bbox=bbox, mean_floor=0.02, blur_sigma=1.5)
+    cart = Cartogram(
+        rho,
+        bbox=bbox,
+        mean_floor=0.02,
+        blur_sigma=1.5,
+        sea_density="auto" if preserve_oceans else None,
+    )
     cart.run(tol=2e-3)
     return cart
 
@@ -232,7 +252,13 @@ def _cmd_world(args) -> int:
         value_col = shaped_col
 
     bbox = wm.padded_bbox(pad=0.02)
-    cart = _build_cartogram(wm.gdf, value_col, bbox, args.grid)
+    cart = _build_cartogram(
+        wm.gdf,
+        value_col,
+        bbox,
+        args.grid,
+        preserve_oceans=args.preserve_oceans,
+    )
     new_geoms = cart.transform_polygons(list(wm.gdf.geometry))
 
     background = None
@@ -282,12 +308,22 @@ def _cmd_shape(args) -> int:
     dy = (ymax - ymin) * 0.02
     bbox = (xmin - dx, ymin - dy, xmax + dx, ymax + dy)
 
-    cart = _build_cartogram(gdf, args.value, bbox, args.grid)
+    cart = _build_cartogram(
+        gdf, args.value, bbox, args.grid,
+        preserve_oceans=args.preserve_oceans,
+    )
     new_geoms = cart.transform_polygons(list(gdf.geometry))
 
     title = args.title or f"Cartogram — area ∝ {args.value}"
     _plot(gdf, new_geoms, args.value, bbox, args.out, args.dpi, title)
     print(f"wrote {args.out}")
+    return 0
+
+
+def _cmd_gui(args) -> int:
+    from .gui import launch
+
+    launch(host=args.host, port=args.port, share=args.share)
     return 0
 
 
@@ -298,4 +334,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return _cmd_world(args)
     if args.cmd == "shape":
         return _cmd_shape(args)
+    if args.cmd == "gui":
+        return _cmd_gui(args)
     return 2
