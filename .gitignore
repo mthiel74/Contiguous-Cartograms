@@ -16,3 +16,6 @@ examples/data/
 # Editors
 .idea/
 .vscode/
+
+# Claude Code local session state
+.claude/
