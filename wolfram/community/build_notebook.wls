@@ -458,29 +458,85 @@ WorldCartogram[{\"my metric\", <|\"Germany\" -> 83., ...|>}]"],
 
  Cell["4. Built-in metrics", "Section"],
 
+ Cell[TextData[{"The four strings ",
+   StyleBox["\"Population\"", "Input"], ", ",
+   StyleBox["\"GDP\"", "Input"], ", ",
+   StyleBox["\"GDPPerCapita\"", "Input"], " and ",
+   StyleBox["\"PopulationDensity\"", "Input"],
+   " are recognised directly and come with sensible defaults for \
+the floor/ceiling that tame heavy-tailed outliers (Monaco on \
+population density, Luxembourg on GDP per capita). The sections \
+below show each of them in turn; every image on this page is \
+produced by the literal one-line call shown next to it."}],
+      "Text"],
+
  Cell["4.1 Population", "Subsection"],
 
- Cell[TextData[{"The canonical cartogram: India, China, and \
-sub-Saharan Africa bloom outward; Russia, Canada, and Australia \
-collapse."}], "Text"],
+ Cell[TextData[{"The canonical cartogram: each country's area is \
+made proportional to how many people live there. India and China \
+together house ~36 % of humanity, so they swell enormously. \
+Nigeria, Indonesia, Pakistan and Bangladesh together host nearly a \
+billion more people across land areas that look small on a \
+Mercator projection \[LongDash] all four bulge substantially. \
+Russia (11 % of global land but 2 % of humanity), Canada, \
+Australia, Mongolia and the Nordic countries collapse."}],
+      "Text"],
+
+ Cell[BoxData["WorldCartogram[\"Population\"]"], "Input"],
 
  imgCell["world.png"],
 
  Cell["4.2 GDP", "Subsection"],
 
+ Cell[TextData[{"Switching to gross domestic product (total value \
+of goods and services produced in a year) rewards economic output \
+rather than headcount. The United States, China, Japan, and the \
+major western European economies dominate; sub-Saharan Africa and \
+much of South Asia \[LongDash] densely populated but far poorer \
+per head \[LongDash] shrink dramatically. This is the mirror image \
+of the population cartogram wherever the two quantities diverge \
+most: Japan (5\[ThinSpace]th largest economy, 11\[ThinSpace]th \
+most populous) expands here but stays modestly sized in 4.1, while \
+the Democratic Republic of the Congo does the opposite."}],
+      "Text"],
+
+ Cell[BoxData["WorldCartogram[\"GDP\"]"], "Input"],
+
  imgCell["world_gdp.png"],
 
  Cell["4.3 GDP per capita", "Subsection"],
 
- Cell[TextData[{"GDP per capita is a per-area quantity, so the \
-cartogram rewards wealth density rather than raw wealth. \
-Luxembourg, Switzerland, the Gulf states and Scandinavia \
-visibly bulge; Africa and parts of South Asia contract."}],
-      "Text"],
+ Cell[TextData[{"GDP per capita (",
+   mathI[Mc],
+   " = country GDP divided by country population) rewards wealth \
+density rather than raw wealth. Luxembourg, Switzerland, \
+Singapore, the Gulf petro-states, and the Scandinavian countries \
+visibly bulge; sub-Saharan Africa, Central America, and parts of \
+South Asia contract. Comparing this to the plain GDP cartogram in \
+4.2: China and India shrink here \[LongDash] they are large \
+economies but not rich per head \[LongDash] while small \
+high-income jurisdictions grow."}], "Text"],
+
+ Cell[BoxData["WorldCartogram[\"GDPPerCapita\"]"], "Input"],
 
  imgCell["world_gdp_per_capita.png"],
 
  Cell["4.4 Population density", "Subsection"],
+
+ Cell[TextData[{"Population density (people per ",
+   mathI[SuperscriptBox["km", "2"]],
+   ") asks a third question: not \"where do people live?\" but \
+\"where do people crowd?\". Bangladesh, the Netherlands, Belgium, \
+South Korea, and island states such as Singapore, Malta and \
+Mauritius swell out of all proportion to their land area; the \
+vast, sparsely populated interiors of Russia, Canada, Australia, \
+Kazakhstan, and much of sub-Saharan Africa collapse. Unlike the \
+absolute-population cartogram in 4.1, large countries like China \
+and the United States end up modestly sized because their \
+populations are diluted across a great deal of territory."}],
+      "Text"],
+
+ Cell[BoxData["WorldCartogram[\"PopulationDensity\"]"], "Input"],
 
  imgCell["world_population_density.png"],
 
