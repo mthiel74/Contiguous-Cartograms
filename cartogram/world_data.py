@@ -180,6 +180,91 @@ class WorldMap:
         )
 
     # ------------------------------------------------------------------
+    def merge_by_sovereign(
+        self,
+        group_column: str = "SOV_A3",
+        numeric_agg: str = "sum",
+    ) -> "WorldMap":
+        """Dissolve multi-part countries into single rows per sovereign.
+
+        Natural Earth's admin-0 layer keeps overseas territories as
+        separate rows: Greenland lives in its own row under sovereign
+        Denmark, Puerto Rico under the United States, French Guiana
+        under France, the Falkland Islands under the United Kingdom,
+        and so on. For cartograms where you want one value per
+        sovereign state, those rows need to be unioned so the
+        territory's geometry contributes to the sovereign's density
+        along with the mainland.
+
+        This method groups the underlying GeoDataFrame by
+        ``group_column`` (default ``"SOV_A3"`` — the Natural Earth
+        3-letter sovereign code), unions the geometries, sums numeric
+        columns, and keeps the first value of text columns. The result
+        is a new :class:`WorldMap` with one row per sovereign.
+
+        If the incoming map has ``gdp`` and ``population`` columns,
+        ``gdp_per_capita`` is recomputed on the aggregated rows (summed
+        GDP divided by summed population) rather than averaged, which
+        is the correct reduction for a per-capita quantity.
+
+        Parameters
+        ----------
+        group_column : str
+            Column to dissolve by. Common choices are ``"SOV_A3"`` (the
+            default — sovereign state ISO-3), ``"SOVEREIGNT"`` (sovereign
+            name), or any user-supplied grouping key.
+        numeric_agg : str
+            How to combine numeric columns across the merged rows.
+            ``"sum"`` is the right choice for absolute quantities
+            (population, GDP, area, CO2 emissions). Pass ``"mean"`` or
+            any pandas-compatible aggfunc name for other semantics.
+
+        Notes
+        -----
+        Requires geopandas and pandas at runtime. Use the
+        ``strategy="admin"`` (i.e. skip calling this) path to preserve
+        the per-territory rows instead of summing them.
+        """
+        import geopandas as gpd  # noqa: F401 — runtime dependency check
+        import pandas as pd
+
+        gdf = self.gdf
+        if group_column not in gdf.columns:
+            raise KeyError(
+                f"{group_column!r} not in world map columns; "
+                f"available: {list(gdf.columns)}"
+            )
+
+        geom_col = gdf.geometry.name
+        aggmap: dict = {}
+        for col in gdf.columns:
+            if col in (group_column, geom_col):
+                continue
+            if pd.api.types.is_numeric_dtype(gdf[col]):
+                aggmap[col] = numeric_agg
+            else:
+                aggmap[col] = "first"
+
+        dissolved = gdf.dissolve(by=group_column, aggfunc=aggmap).reset_index()
+
+        # Per-capita quantities must be recomputed from the aggregated
+        # totals; summing them directly would be nonsensical.
+        if (
+            "gdp_per_capita" in dissolved.columns
+            and "gdp" in dissolved.columns
+            and "population" in dissolved.columns
+        ):
+            pop = dissolved["population"].replace(0, float("nan"))
+            dissolved["gdp_per_capita"] = (dissolved["gdp"] / pop).fillna(0.0)
+
+        return WorldMap(
+            gdf=dissolved,
+            value_column=self.value_column,
+            name_column=self.name_column,
+            iso_column=self.iso_column,
+        )
+
+    # ------------------------------------------------------------------
     @property
     def bbox(self) -> tuple[float, float, float, float]:
         """Bounding box of the loaded geometries in the current CRS."""
