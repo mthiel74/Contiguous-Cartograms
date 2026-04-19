@@ -557,32 +557,55 @@ under ",
 \"UnitedStates\"}]", "Input"],
    " and its Hawaii analogue. If we rasterised the bare ",
    StyleBox["CountryData", "Input"],
-   " polygon the US would grow on the cartogram \[LongDash] but only \
-the lower 48 would grow, because Alaska and Hawaii would contribute \
-zero density to the diffusion field. ",
+   " polygon the US would still grow on the cartogram \[LongDash] \
+but only the lower 48 would grow, because Alaska and Hawaii would \
+contribute zero density to the diffusion field and would not even \
+appear on the map. ",
    StyleBox["CartogramWL", "Input"],
    " therefore splices the administrative-division polygons back in \
 via a helper ",
    StyleBox["CountryPolygonRings[c]", "Input"],
-   " before rasterising. Below is the full US ring set that actually \
-feeds the algorithm \[LongDash] 28 mainland rings plus 77 Alaska \
-rings (one ring per Aleutian island) plus 8 Hawaiian rings, 113 \
-rings in total, all drawn in the same colour because they share a \
-single country value. The same hook can be used to splice in \
-France's overseas departments, Portugal's Azores/Madeira, Denmark's \
-Greenland, and so on."}], "Text"],
+   ":"}], "Text"],
 
  Cell[BoxData[
 "Length @ CountryPolygonRings[\"UnitedStates\"]\n\
-(* 113  -- 28 mainland + 77 Alaska + 8 Hawaii *)"], "Input"],
+(* 113  -- 28 mainland + 77 Alaska (mainland + Aleutians) + 8 Hawaii *)"],
+      "Input"],
+
+ Cell[TextData[{"The figure below makes the effect unambiguous. We \
+rasterise the world's GDP twice at identical cartogram parameters \
+\[LongDash] once from the bare ",
+   StyleBox["CountryData", "Input"],
+   " polygons (left column), once from ",
+   StyleBox["CountryPolygonRings", "Input"],
+   " (right column) \[LongDash] and highlight just the United \
+States in orange. Top row shows the geographic inputs; bottom row \
+shows the GDP cartogram cropped to North America. Without the fix, \
+Alaska and Hawaii are missing altogether; with the fix both show up \
+on the geographic panel and both inflate alongside the mainland \
+on the cartogram. The same hook can be used to splice in France's \
+overseas departments, Portugal's Azores/Madeira, Denmark's \
+Greenland, and so on."}], "Text"],
+
+ imgCell["alaska_before_after.png",
+  "Figure 2. GDP cartogram of North America, United States \
+highlighted in orange. Top row: geographic inputs. Bottom row: the \
+resulting cartogram. Left column uses only CountryData[\"UnitedStates\
+\", \"Polygon\"] (mainland 48 states, Alaska and Hawaii missing). \
+Right column uses CartogramWL`CountryPolygonRings which splices in \
+the Alaska and Hawaii AdministrativeDivision polygons. Every ring of \
+the same country shares the country's per-area density, so Alaska \
+and Hawaii grow along with the mainland when they are included."],
+
+ Cell[TextData[{"For reference, here is the full US ring set drawn \
+on a plain geographic frame \[LongDash] 28 mainland rings on the \
+right, Alaska mainland and its 77 Aleutian-island rings in the upper \
+left, and 8 Hawaiian islands in the lower left:"}], "Text"],
 
  imgCell["united_states_polygon.png",
-  "Figure 2. The polygon set that actually feeds the cartogram for \
-the United States. Mainland (28 rings, right), Alaska mainland + \
-Aleutians (77 rings, left), and Hawaii (8 islands, bottom-left). \
-Every ring of the same country shares the country's per-area \
-density, so Alaska and Hawaii grow alongside the mainland on the \
-GDP or population cartogram."],
+  "Figure 3. CartogramWL`CountryPolygonRings[\"UnitedStates\"] \
+returns 113 exterior rings all in one list. Drawn here as a single \
+orange fill so the full polygon coverage is obvious."],
 
  (* ---- Section 5: Colour & satellite ---- *)
 

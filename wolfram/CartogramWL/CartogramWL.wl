@@ -656,7 +656,14 @@ adminRings[state_, country_] := Module[{poly, rings, mainHemisphere},
      (Alaska, Hawaii are both at lon < 0). *)
   Select[rings, Max[#[[All, 1]]] < 0 &]];
 
-extraCountryRings[c_] := Switch[c,
+(* Country identifier as used by CountryData: either the canonical
+   string (e.g. "UnitedStates") or the Entity form. Normalise to
+   string so the Switch below is agnostic. *)
+countryKey[c_String] := c;
+countryKey[Entity["Country", s_String]] := s;
+countryKey[_] := "";
+
+extraCountryRings[c_] := Switch[countryKey[c],
   "UnitedStates",
     Join[
       adminRings["Alaska",  "UnitedStates"],
