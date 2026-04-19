@@ -46,27 +46,32 @@ inverse DCTs. The gradient uses array shifts instead of `Do` loops.
 | nSnaps | `CartogramRun` time | speed-up | max grid err | mean | median |
 |---:|---:|---:|---:|---:|---:|
 | baseline  | 316 s | 1.0×  |  — | — | — |
-| 25   |  55 s | 5.8×  | 21.8° | 2.46° | 1.40° |
-| 50   |  31 s | 10.3× | 16.7° | 1.35° | 0.55° |
-| 100  |  29 s | 10.9× | 13.1° | 0.66° | 0.16° |
+| 25   |  19 s | 16.5× | 3.50° | 0.35° | 0.26° |
+| 50   |  25 s | 12.7× | 0.84° | 0.08° | 0.06° |
+| 100  |  24 s | 13.0× | 0.21° | 0.02° | 0.015° |
 
 Errors are in degrees of longitude/latitude on a 360 × 145° frame.
-At rendering resolution (900 px wide) one pixel is ~0.4°, so median
-error at 50 snapshots is already subpixel.
+At rendering resolution (900 px wide) one pixel is ~0.4°, so the
+median error at 50 snapshots (0.06°) is ~15× sub-pixel.
 
-Going from 50 to 100 snapshots barely changes wall-clock (the
-bottleneck shifts to NDSolveValue's own stepping logic) but halves
-the worst-point error. The fast defaults ship with `"Snapshots" -> 60`.
+The snapshot grid is spaced **geometrically** from
+`t_0 = 0.1 / λ_max` out to `t_*`, with `t = 0` prepended. This
+matters on the world bbox, where `t_*` exceeds 10⁴ but the fastest
+diffusion mode has a timescale ≈ 0.1 — a linear-in-t grid would put
+the first non-zero snapshot thousands of e-folds past the fast-mode
+collapse and the cartogram would barely deform. The fast defaults
+ship with `"Snapshots" -> 60`, giving sub-pixel agreement with the
+baseline.
 
 ### Pipeline totals
 
-| stage | baseline | fast (50 snaps) |
+| stage | baseline | fast (60 snaps, `PerformanceGoal -> "Speed"`) |
 |---|---:|---:|
-| rasterise      |  10 s |  10 s |
-| cartogram run  | 316 s |  31 s |
-| polygon warp   |  10 s |   6 s |
-| **total**      | **336 s** | **47 s** |
-| speed-up       | 1.0× | **7.2×** |
+| rasterise      |  11 s |  11 s |
+| cartogram run  | 317 s |  25 s |
+| polygon warp   |  10 s |   7 s |
+| **total**      | **338 s** | **43 s** |
+| speed-up       | 1.0× | **7.9×** |
 
 ## Things we tried that didn't pay off
 

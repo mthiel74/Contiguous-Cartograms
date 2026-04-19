@@ -139,10 +139,23 @@ fastBilinear[field_, bbox_, dx_, dy_, xq_, yq_] := Module[
       every sub-step.
 ==================================================================== *)
 
+(* Snapshot time grid.  The density modes decay exponentially with
+   rates lambda_mn.  Fast modes (large lambda) finish collapsing well
+   before slow modes start, so a linear-ish spacing in t misses the
+   fast-mode dynamics entirely on large domains.  We space the
+   snapshots geometrically from t0 = small fraction of the fastest
+   decay time out to tMax, with t=0 prepended so the first RHS call
+   has the initial condition.  This is the regime where linear
+   interpolation of rho agrees with the exact exponential solution to
+   a few parts in 1e3. *)
 buildSnapshots[solver_, tMax_, nSnaps_] := Module[
-  {tGrid, rho, gy, gx, out, dx, dy},
+  {tGrid, rho, gy, gx, out, dx, dy, lamMax, t0, ratio},
   dx = solver["dx"]; dy = solver["dy"];
-  tGrid = Table[tMax * (k/nSnaps)^1.5, {k, 0, nSnaps}];
+  lamMax = Max[solver["lam"]];
+  t0 = Min[0.1/Max[lamMax, 1.*^-12], tMax/1000.];
+  ratio = (tMax/t0)^(1./(nSnaps - 1));
+  tGrid = Prepend[
+    Table[t0 * ratio^(k - 1), {k, 1, nSnaps}], 0.];
   out = Table[
     rho = CartogramWL`DensityAt[solver, tGrid[[k + 1]]];
     {gy, gx} = fastCentralGradient[rho, dy, dx];

@@ -60,6 +60,7 @@ Print["  baseline (NDSolveValue)      : ", tRunBase, " s"];
 Do[
   {tRunFast, cartFast} = AbsoluteTiming[
     CartogramWLFast`FastCartogramRun[cart0,
+      PerformanceGoal -> "Speed",
       "Tol" -> 3.*^-3, "Snapshots" -> ns]];
   Print["  fast (snapshot-cached RHS, nSnaps=", ns, ") : ",
         tRunFast, " s"];
