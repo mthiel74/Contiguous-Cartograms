@@ -90,6 +90,56 @@ def test_world_cartogram_dict_metric(fake_world):
     assert vals == [1.0, 9.0]
 
 
+def test_world_cartogram_dict_metric_mixed_aliases(monkeypatch):
+    """Dict keys in arbitrary forms (Wolfram-style, ISO2, common name)
+    should route correctly via country_lookup."""
+    gpd = pytest.importorskip("geopandas")
+    from shapely.geometry import Polygon
+    from cartogram.world_data import WorldMap
+
+    gdf = gpd.GeoDataFrame(
+        {
+            "ISO_A3": ["USA", "GBR"],
+            "SOV_A3": ["USA", "GBR"],
+            "NAME": ["United States", "United Kingdom"],
+            "population": [332.0, 67.0],
+            "gdp": [25e12, 3e12],
+            "gdp_per_capita": [75000.0, 45000.0],
+            "geometry": [
+                Polygon([(0.05, 0.05), (0.45, 0.05),
+                         (0.45, 0.95), (0.05, 0.95)]),
+                Polygon([(0.55, 0.05), (0.95, 0.05),
+                         (0.95, 0.95), (0.55, 0.95)]),
+            ],
+        },
+        crs="EPSG:4326",
+    )
+
+    def _load(cls, *args, **kwargs):
+        return WorldMap(
+            gdf=gdf.copy(),
+            name_column="NAME",
+            iso_column="ISO_A3",
+        )
+
+    monkeypatch.setattr(WorldMap, "load", classmethod(_load))
+
+    from cartogram import world_cartogram
+
+    result = world_cartogram(
+        {
+            "UnitedStates": 10.0,     # Wolfram-style
+            "UK": 1.0,                # alpha-2
+        },
+        label="aliases",
+        grid_size=(64, 128),
+        render=False,
+        performance_goal="quality",
+    )
+    vals = result.world_map.gdf.set_index("ISO_A3")["value"].to_dict()
+    assert vals == {"USA": 10.0, "GBR": 1.0}
+
+
 def test_world_cartogram_callable_metric(fake_world):
     from cartogram import world_cartogram
 

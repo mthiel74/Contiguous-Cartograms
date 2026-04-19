@@ -152,8 +152,18 @@ def world_cartogram(
             )
         values = gdf[metric].astype(float).to_numpy()
     elif isinstance(metric, Mapping):
+        from .country_lookup import canonical, normalise_mapping
+
+        canonical_map = normalise_mapping(metric)
         iso_col = wm.iso_column if wm.iso_column in gdf.columns else "SOV_A3"
-        mapped = gdf[iso_col].map(lambda k: float(metric.get(k, 0.0)))
+
+        def _lookup(row_key: str) -> float:
+            c = canonical(row_key)
+            if c is None:
+                c = row_key.strip().upper() if isinstance(row_key, str) else ""
+            return float(canonical_map.get(c, 0.0))
+
+        mapped = gdf[iso_col].map(_lookup)
         values = mapped.to_numpy(dtype=float)
     elif callable(metric):
         values = np.array([float(metric(row)) for _, row in gdf.iterrows()])
