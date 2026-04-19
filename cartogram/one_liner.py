@@ -69,6 +69,7 @@ def world_cartogram(
     tol: float = 1e-3,
     render: bool = True,
     cmap: str = "plasma",
+    missing_countries: Literal["hide", "grey"] = "hide",
 ) -> WorldCartogramResult:
     """Build a world cartogram in one call.
 
@@ -113,6 +114,14 @@ def world_cartogram(
         the result.
     cmap : str
         Colormap for both panels when ``render=True``.
+    missing_countries : {"hide", "grey"}
+        How countries whose metric is missing / zero are handled on the
+        rendered figure. ``"hide"`` (default) matches the Wolfram
+        behaviour: those countries are dropped from both panels and
+        contribute nothing to the density field. ``"grey"`` keeps them
+        on the map in a neutral grey — they still do not deform the
+        cartogram (their weight stays at the floor), but the reader
+        can see the full world and tell "no data" apart from "zero".
 
     Returns
     -------
@@ -174,24 +183,57 @@ def world_cartogram(
     gdf = gdf.copy()
     gdf["value"] = values
 
+    # Track which rows are "missing" (NaN or <= 0 on a positive metric)
+    # so we can honour missing_countries on the render side. We keep the
+    # mask on the gdf so downstream consumers (plotting, joins) can see
+    # it too.
+    has_value_mask = np.isfinite(values) & (values > 0)
+    gdf["__has_value"] = has_value_mask
+
     # Heavy-tail clipping — mirrors the Wolfram defaults for per-capita
-    # metrics. Opt-in because absolute quantities rarely need it.
+    # metrics. Opt-in because absolute quantities rarely need it. Only
+    # applied to rows that actually have a value; missing rows stay at
+    # zero so they don't inflate the cartogram.
     if min_floor_fraction is not None:
-        positive = values[values > 0]
+        positive = values[has_value_mask]
         if positive.size:
             floor = float(min_floor_fraction) * float(positive.mean())
-            gdf["value"] = np.maximum(gdf["value"].to_numpy(), floor)
-            values = gdf["value"].to_numpy()
+            clamped = np.where(
+                has_value_mask,
+                np.maximum(gdf["value"].to_numpy(), floor),
+                gdf["value"].to_numpy(),
+            )
+            gdf["value"] = clamped
+            values = clamped
+
+    if missing_countries == "hide":
+        # Drop missing rows from the gdf entirely; rasterisation /
+        # polygon warp / plot all become naturally consistent.
+        gdf = gdf.loc[has_value_mask].reset_index(drop=True)
+        values = gdf["value"].to_numpy(dtype=float)
+        has_value_mask = np.ones(len(gdf), dtype=bool)
 
     # Choose a bbox. Default: the map's padded total bounds.
     if bbox is None:
         bbox = wm.padded_bbox(pad=0.02)
 
-    # Rasterise polygons weighted by `value`.
+    # Rasterise polygons weighted by `value`. Only rows that carry a
+    # value contribute to the density field -- "grey" rows are drawn
+    # on the plot but must not distort the cartogram.
     ny, nx = grid_size
+    raster_geoms = [
+        geom for geom, keep in zip(gdf.geometry, has_value_mask) if keep
+    ]
+    raster_values = [
+        float(v) for v, keep in zip(gdf["value"], has_value_mask) if keep
+    ]
+    if not raster_geoms:
+        raise ValueError(
+            "no country carries a value for this metric; nothing to rasterise"
+        )
     rho = rasterize_polygons(
-        list(gdf.geometry),
-        list(gdf["value"].astype(float)),
+        raster_geoms,
+        raster_values,
         bbox,
         (ny, nx),
     )
@@ -217,7 +259,10 @@ def world_cartogram(
 
     fig = None
     if render:
-        fig = _render_side_by_side(gdf, deformed, value_label, cmap=cmap)
+        fig = _render_side_by_side(
+            gdf, deformed, value_label, cmap=cmap,
+            has_value_mask=has_value_mask,
+        )
 
     wm_out = WorldMap(
         gdf=gdf,
@@ -233,19 +278,30 @@ def world_cartogram(
     )
 
 
-def _render_side_by_side(gdf, deformed, label: str, cmap: str = "plasma"):
+def _render_side_by_side(
+    gdf, deformed, label: str,
+    cmap: str = "plasma",
+    has_value_mask=None,
+):
     """Two-panel geographic + cartogram figure.
 
-    Same log1p colour scale on both panels so the eye compares directly.
+    Same log1p colour scale on both panels so the eye compares
+    directly. If ``has_value_mask`` is supplied, rows where the mask is
+    False are rendered in neutral grey on both panels (see the
+    ``missing_countries="grey"`` option).
     """
     import matplotlib.pyplot as plt
     from matplotlib.colors import LogNorm, Normalize
 
     vals = gdf["value"].to_numpy(dtype=float)
-    finite = vals[np.isfinite(vals) & (vals > 0)]
+    if has_value_mask is None:
+        mask = np.ones(len(vals), dtype=bool)
+    else:
+        mask = np.asarray(has_value_mask, dtype=bool)
+
+    finite = vals[mask & np.isfinite(vals) & (vals > 0)]
     if finite.size == 0:
         norm = Normalize(vmin=0, vmax=1)
-        color_vals = vals
     else:
         vmin = float(finite.min())
         vmax = float(finite.max())
@@ -253,33 +309,59 @@ def _render_side_by_side(gdf, deformed, label: str, cmap: str = "plasma"):
             norm = LogNorm(vmin=vmin, vmax=vmax)
         else:
             norm = Normalize(vmin=vmin, vmax=vmax)
-        color_vals = np.where(vals > 0, vals, vmin)
+
+    grey = "#d9d9d9"
+    valued_gdf = gdf.loc[mask]
+    missing_gdf = gdf.loc[~mask]
 
     fig, (ax_geo, ax_cart) = plt.subplots(
         1, 2, figsize=(18, 6), constrained_layout=True
     )
-    gdf.plot(
-        column="value",
-        ax=ax_geo, cmap=cmap, norm=norm,
-        edgecolor="black", linewidth=0.2,
-    )
+
+    if not missing_gdf.empty:
+        missing_gdf.plot(
+            ax=ax_geo, color=grey,
+            edgecolor="black", linewidth=0.2,
+        )
+    if not valued_gdf.empty:
+        valued_gdf.plot(
+            column="value", ax=ax_geo, cmap=cmap, norm=norm,
+            edgecolor="black", linewidth=0.2,
+        )
     ax_geo.set_title("Geographic")
     ax_geo.set_aspect("equal")
     ax_geo.set_xticks([]); ax_geo.set_yticks([])
 
-    # Build a temporary GeoDataFrame of the deformed geometries so we
-    # can piggyback on geopandas' plot() + colourmap.
     import geopandas as gpd
-    deformed_gdf = gpd.GeoDataFrame(
-        {"value": vals},
-        geometry=list(deformed),
+    deformed_list = list(deformed)
+    if missing_gdf.empty:
+        missing_deformed = gpd.GeoDataFrame(
+            {"value": []}, geometry=[], crs=gdf.crs
+        )
+    else:
+        missing_idx = np.where(~mask)[0]
+        missing_deformed = gpd.GeoDataFrame(
+            {"value": vals[~mask]},
+            geometry=[deformed_list[i] for i in missing_idx],
+            crs=gdf.crs,
+        )
+    valued_idx = np.where(mask)[0]
+    valued_deformed = gpd.GeoDataFrame(
+        {"value": vals[mask]},
+        geometry=[deformed_list[i] for i in valued_idx],
         crs=gdf.crs,
     )
-    deformed_gdf.plot(
-        column="value",
-        ax=ax_cart, cmap=cmap, norm=norm,
-        edgecolor="black", linewidth=0.2,
-    )
+
+    if not missing_deformed.empty:
+        missing_deformed.plot(
+            ax=ax_cart, color=grey,
+            edgecolor="black", linewidth=0.2,
+        )
+    if not valued_deformed.empty:
+        valued_deformed.plot(
+            column="value", ax=ax_cart, cmap=cmap, norm=norm,
+            edgecolor="black", linewidth=0.2,
+        )
     ax_cart.set_title(f"Cartogram (area ∝ {label}, oceans preserved)")
     ax_cart.set_aspect("equal")
     ax_cart.set_xticks([]); ax_cart.set_yticks([])

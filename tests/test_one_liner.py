@@ -158,3 +158,43 @@ def test_world_cartogram_unknown_column(fake_world):
 
     with pytest.raises(KeyError, match="not_a_column"):
         world_cartogram("not_a_column", grid_size=(32, 64), render=False)
+
+
+def test_missing_countries_hide_default(fake_world):
+    """Dict with only one country present -> the other is dropped."""
+    from cartogram import world_cartogram
+
+    result = world_cartogram(
+        {"AAA": 5.0},                 # BBB deliberately missing
+        grid_size=(64, 128),
+        render=False,
+        performance_goal="quality",
+        missing_countries="hide",
+    )
+    # One row in the result (BBB was dropped before the polygon warp).
+    assert len(result.world_map.gdf) == 1
+    assert result.world_map.gdf.iloc[0]["ISO_A3"] == "AAA"
+    assert len(result.deformed_geometries) == 1
+
+
+def test_missing_countries_grey_keeps_row(fake_world):
+    """missing_countries='grey' retains missing rows for plotting but
+    they still contribute zero to the density field."""
+    from cartogram import world_cartogram
+
+    result = world_cartogram(
+        {"AAA": 5.0},
+        grid_size=(64, 128),
+        render=False,
+        performance_goal="quality",
+        missing_countries="grey",
+    )
+    # Both rows survive.
+    assert len(result.world_map.gdf) == 2
+    # The missing row has value 0 and __has_value False.
+    missing = result.world_map.gdf[result.world_map.gdf["__has_value"] == False]
+    assert len(missing) == 1
+    assert missing.iloc[0]["ISO_A3"] == "BBB"
+    assert missing.iloc[0]["value"] == 0.0
+    # Polygon warp ran for both rows.
+    assert len(result.deformed_geometries) == 2
