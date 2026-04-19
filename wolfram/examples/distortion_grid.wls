@@ -38,8 +38,20 @@ values  = entries[[All, "value"]];
 floor   = 0.01 * Mean[Select[values, # > 0 &]];
 entries = Map[Append[#, "value" -> Max[#["value"], floor]] &, entries];
 
-polyRaster = entries[[All, "rings", 1]];
-vals       = entries[[All, "value"]];
+(* Split every country into its constituent rings and distribute
+   the GDP across rings by area so Alaska/Hawaii contribute to the
+   density field alongside the mainland US. *)
+{polyRaster, vals} = Transpose[Flatten[Map[
+  Function[e, Module[{rs, areas, tot},
+    rs    = e["rings"];
+    areas = Map[0.5 Abs[Total[MapThread[
+              #1[[1]] #2[[2]] - #2[[1]] #1[[2]] &,
+              {#, RotateLeft[#]}]]] &, rs];
+    tot   = Total[areas];
+    If[tot > 0,
+      MapThread[{#1, e["value"] * #2/tot} &, {rs, areas}],
+      {}]]],
+  entries], 1]];
 Print["rasterising..."];
 rho     = CartogramWL`RasterizePolygons[polyRaster, vals, bbox,
             {192, 384}, 2];

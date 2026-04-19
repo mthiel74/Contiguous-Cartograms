@@ -694,9 +694,33 @@ WorldCartogram[metric_, opts : OptionsPattern[]] := Module[
   entries  = Map[Append[#, "value" -> Max[#["value"], floor]] &,
                   entries];
 
-  polyRaster = entries[[All, "rings", 1]];
-  vals       = entries[[All, "value"]];
-  rho        = RasterizePolygons[polyRaster, vals, bbox, gridSize, 2];
+  (* Split each country into its constituent rings (mainland +
+     Alaska + Hawaii for the US, mainland + all overseas regions
+     for France, etc.) and distribute the country value across
+     those rings in proportion to ring area. This way the per-cell
+     density of every ring equals (country value)/(country total
+     area) — the same quantity for every ring of the same country
+     — and the cartogram grows Alaska along with the mainland
+     instead of leaving it geographic-sized.
+
+     Keep `vals` holding the ORIGINAL per-country values so the
+     colour scale below maps on country identity, not on
+     per-ring area-weighted fragments. *)
+  vals = entries[[All, "value"]];
+  Module[{pairs, polyR, valR},
+    pairs = Flatten[Map[
+      Function[e, Module[{rs, areas, tot},
+        rs    = e["rings"];
+        areas = Map[0.5 Abs[Total[MapThread[
+                  #1[[1]] #2[[2]] - #2[[1]] #1[[2]] &,
+                  {#, RotateLeft[#]}]]] &, rs];
+        tot   = Total[areas];
+        If[tot > 0,
+          MapThread[{#1, e["value"] * #2/tot} &, {rs, areas}],
+          {}]]],
+      entries], 1];
+    {polyR, valR} = Transpose[pairs];
+    rho = RasterizePolygons[polyR, valR, bbox, gridSize, 2]];
   posMean    = Mean[Select[Flatten[rho], # > 0 &]];
   ceiling    = ceilMult * posMean;
   rho        = Map[Min[#, ceiling] &, rho, {2}];

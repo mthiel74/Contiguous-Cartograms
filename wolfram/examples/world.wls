@@ -48,12 +48,28 @@ bbox = {xmin, ymin, xmax, ymax};
 
 (* ---- Rasterise: each country contributes population/area to its
    cells. "area" here is 2-D area in {lon, lat} space, which is not
-   equal-area, but for the diffusion step it is enough. *)
+   equal-area, but for the diffusion step it is enough. Split each
+   country into all its rings (mainland + Alaska + Hawaii, etc.) and
+   distribute the population across those rings in proportion to
+   their area, so the per-cell density is identical across rings of
+   the same country and Alaska grows alongside the mainland. *)
 Print["rasterising..."];
-polyForRaster = entries[[All, "rings", 1]];   (* outer ring only *)
-pops = entries[[All, "pop"]];
-rho = CartogramWL`RasterizePolygons[polyForRaster, pops, bbox,
-         {192, 384}, 2];
+Module[{pairs, polys, vals},
+  pairs = Flatten[Map[
+    Function[e, Module[{rs, areas, tot},
+      rs    = e["rings"];
+      areas = Map[0.5 Abs[Total[MapThread[
+                #1[[1]] #2[[2]] - #2[[1]] #1[[2]] &,
+                {#, RotateLeft[#]}]]] &, rs];
+      tot   = Total[areas];
+      If[tot > 0,
+        MapThread[{#1, e["pop"] * #2/tot} &, {rs, areas}],
+        {}]]],
+    entries], 1];
+  {polys, vals} = Transpose[pairs];
+  rho = CartogramWL`RasterizePolygons[polys, vals, bbox,
+          {192, 384}, 2]];
+pops = entries[[All, "pop"]];  (* keep per-country pops for colour scale *)
 Print["  rho max=", Max[Flatten[rho]],
       " mean=", Mean[Flatten[rho]]];
 
