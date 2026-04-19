@@ -8,10 +8,16 @@ hereDir = DirectoryName[If[$ScriptCommandLine =!= {}, $InputFileName,
                            NotebookFileName[]]];
 imgDir  = FileNameJoin[{hereDir, "..", "docs", "images"}];
 
+(* Target image width (in Wolfram display units). Chosen so that the
+   rasterised content bleeds to the edges of the printable area of
+   the default PDF page (Letter, standard margins) without
+   overflowing. *)
+imgWidth = 680;
+
 loadImg[name_] := With[
   {p = FileNameJoin[{imgDir, name}]},
   If[FileExistsQ[p],
-    Image[Import[p], ImageSize -> 500],
+    Image[Import[p], ImageSize -> imgWidth],
     Style["[missing image: " <> name <> "]", Red]]];
 
 imgCell[name_, caption_String: ""] := Cell[
@@ -22,10 +28,10 @@ imgCell[name_, caption_String: ""] := Cell[
         loadImg[name],
         Pane[Style[caption, Italic, FontSize -> 10,
                    FontFamily -> "Helvetica"],
-             500, Alignment -> Center]},
+             imgWidth, Alignment -> Center]},
         Alignment -> Center, Spacings -> 0.6]]]],
   "Output", ShowCellLabel -> False,
-  CellMargins -> {{66, 20}, {10, 14}}];
+  CellMargins -> {{0, 0}, {10, 14}}];
 
 (* -----------------------------------------------------------------
    Math typesetting helpers. Every equation is built as a Box
