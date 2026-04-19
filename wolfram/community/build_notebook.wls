@@ -1,17 +1,12 @@
 #!/usr/bin/env wolframscript
 (* Build wolfram/community/cartograms.nb — a Wolfram Notebook suitable
-   for posting to the Wolfram Community. Also exports a PDF rendering
-   of the notebook for layout inspection.
-
-   The notebook walks through the Gastner-Newman diffusion cartogram
-   method, references the CartogramWL package, shows all demo images
-   (which must exist under wolfram/docs/images/), and includes
-   runnable code cells. *)
+   for posting to the Wolfram Community, with native math typesetting
+   (no literal $...$ placeholders). Also exports the same content as
+   a PDF for offline layout review. *)
 
 hereDir = DirectoryName[If[$ScriptCommandLine =!= {}, $InputFileName,
                            NotebookFileName[]]];
 imgDir  = FileNameJoin[{hereDir, "..", "docs", "images"}];
-pkgPath = FileNameJoin[{hereDir, "..", "CartogramWL", "CartogramWL.wl"}];
 
 loadImg[name_] := With[
   {p = FileNameJoin[{imgDir, name}]},
@@ -32,9 +27,96 @@ imgCell[name_, caption_String: ""] := Cell[
   "Output", ShowCellLabel -> False,
   CellMargins -> {{66, 20}, {10, 14}}];
 
-(* helper: inline math via TeX-like literal text; community post will
-   render the $...$ delimiters. *)
-tex[s_String] := s;
+(* -----------------------------------------------------------------
+   Math typesetting helpers. Every equation is built as a Box
+   expression and wrapped in FormBox[..., TraditionalForm] so Wolfram
+   draws it with real math fonts (fractions, subscripts, Greek,
+   partials, etc.) both in the notebook and in the exported PDF.
+----------------------------------------------------------------- *)
+
+boldR := StyleBox["r", FontWeight -> Bold];
+boldV := StyleBox["v", FontWeight -> Bold];
+boldN := StyleBox["n", FontWeight -> Bold];
+
+(* inline math embedded inside a Text cell *)
+mathI[box_] := Cell[BoxData[FormBox[box, TraditionalForm]],
+  "InlineFormula", FontFamily -> "Times"];
+
+(* centred display equation — its own cell *)
+mathD[box_] := Cell[BoxData[FormBox[box, TraditionalForm]],
+  "DisplayFormula", TextAlignment -> Center,
+  FontFamily -> "Times"];
+
+(* convenience: wrap Wolfram expressions in HoldForm and convert *)
+tbx[expr_] := ToBoxes[HoldForm[expr], TraditionalForm];
+
+(* ------- inline fragments ------- *)
+
+vField      = RowBox[{boldV, "=",
+                RowBox[{"-",
+                  FractionBox[RowBox[{"\[Del]", "\[Rho]"}], "\[Rho]"]}]}];
+rhoOfR      = RowBox[{"\[Rho]", "(", boldR, ")"}];
+rhoOfRt     = RowBox[{"\[Rho]", "(", boldR, ",", " ", "t", ")"}];
+Mc          = SubscriptBox["M", "c"];
+Ac          = SubscriptBox["A", "c"];
+rho0OfR     = RowBox[{SubscriptBox["\[Rho]", "0"], "(", boldR, ")"}];
+lambdaMN    = SubscriptBox["\[Lambda]", "m n"];
+rhoHatMN    = SubscriptBox[OverscriptBox["\[Rho]", "^"], "m n"];
+tStar       = SuperscriptBox["t", "\[Star]"];
+oNLogN      = RowBox[{"O", "(", "N", " ", Log, " ", "N", ")"}];
+sigmaSym    = "\[Sigma]";
+tZero       = SubscriptBox["t", "0"];
+sigmaSqDxDy = RowBox[{SuperscriptBox["\[Sigma]", "2"], " ",
+                      "\[CapitalDelta]", "x", " ",
+                      "\[CapitalDelta]", "y", "/", "2"}];
+
+(* ------- display equations ------- *)
+
+heatEq = RowBox[{
+  RowBox[{SubscriptBox["\[PartialD]", "t"], " ", rhoOfRt}],
+  "=",
+  RowBox[{SuperscriptBox["\[Del]", "2"], " ", rhoOfRt}],
+  ",", "\[ThickSpace]\[ThickSpace]\[ThickSpace]",
+  RowBox[{boldN, "\[CenterDot]", "\[Del]", "\[Rho]"}],
+  "=", "0", ",", "\[ThickSpace]\[ThickSpace]",
+  "on", "\[ThickSpace]",
+  RowBox[{"\[PartialD]", "\[CapitalOmega]"}]}];
+
+velEq = RowBox[{
+  FractionBox[RowBox[{"d", " ", boldR}], "d t"], "=",
+  RowBox[{boldV, "(", boldR, ",", " ", "t", ")"}], "=",
+  RowBox[{"-",
+    FractionBox[
+      RowBox[{"\[Del]", " ", rhoOfRt}],
+      rhoOfRt]}]}];
+
+densityEq = RowBox[{rho0OfR, "=", FractionBox[Mc, Ac],
+  ",", "\[ThickSpace]\[ThickSpace]",
+  "for", "\[ThickSpace]",
+  RowBox[{boldR, "\[Element]", "c"}]}];
+
+dctExpansion = RowBox[{
+  rhoOfRt, "=",
+  RowBox[{
+    UnderoverscriptBox["\[Sum]", RowBox[{"m", ",", "n"}], ""],
+    rhoHatMN, " ",
+    SuperscriptBox["e",
+      RowBox[{"-", lambdaMN, " ", "t"}]], " ",
+    RowBox[{"cos", "(",
+      FractionBox[RowBox[{"\[Pi]", " ", "m", " ", "x"}],
+                  SubscriptBox["L", "x"]], ")"}], " ",
+    RowBox[{"cos", "(",
+      FractionBox[RowBox[{"\[Pi]", " ", "n", " ", "y"}],
+                  SubscriptBox["L", "y"]], ")"}]}]}];
+
+lambdaEq = RowBox[{lambdaMN, "=",
+  SuperscriptBox["\[Pi]", "2"], " ",
+  RowBox[{"(",
+    RowBox[{
+      FractionBox[SuperscriptBox["m", "2"],
+                  SubsuperscriptBox["L", "x", "2"]], "+",
+      FractionBox[SuperscriptBox["n", "2"],
+                  SubsuperscriptBox["L", "y", "2"]]}], ")"}]}];
 
 cells = {
 
@@ -56,36 +138,38 @@ Contiguous-Cartograms"], None}]}],
 
  Cell["Abstract", "Section"],
 
- Cell[TextData[{"Cartograms are maps in which the area of each region \
-is deformed to be proportional to a statistical quantity \
-\[LongDash] population, GDP, number of COVID cases, votes cast, and \
-so on \[LongDash] while the topology (who is next to whom) is \
-preserved. Gastner and Newman (2004) showed how to produce such \
-maps by interpreting the quantity as a density and letting it \
-diffuse to uniformity; every point of the map is advected by the \
-resulting velocity field ",
-      tex["$\\mathbf{v} = -\\nabla \\rho / \\rho$"],
-      ". This notebook presents a compact, pure-Wolfram-Language \
-port of that algorithm. It ships as a paclet-style package ",
-      StyleBox["CartogramWL", "Input"],
-      " exposing both low-level primitives (",
-      StyleBox["DiffusionSolver", "Input"], ", ",
-      StyleBox["Cartogram", "Input"], ", ",
-      StyleBox["CartogramTransform", "Input"],
-      ") and a one-liner ",
-      StyleBox["WorldCartogram[metric]", "Input"],
-      " that pulls country polygons and statistical values from the \
+ Cell[TextData[{
+   "Cartograms are maps in which the area of each region is deformed \
+to be proportional to a statistical quantity \[LongDash] population, \
+GDP, number of COVID cases, votes cast, and so on \[LongDash] while \
+the topology (who is next to whom) is preserved. Gastner and Newman \
+(2004) showed how to produce such maps by interpreting the quantity \
+as a density and letting it diffuse to uniformity; every point of \
+the map is advected by the resulting velocity field ",
+   mathI[vField],
+   ". This notebook presents a compact, pure-Wolfram-Language port \
+of that algorithm. It ships as a paclet-style package ",
+   StyleBox["CartogramWL", "Input"],
+   " exposing both low-level primitives (",
+   StyleBox["DiffusionSolver", "Input"], ", ",
+   StyleBox["Cartogram", "Input"], ", ",
+   StyleBox["CartogramTransform", "Input"],
+   ") and a one-liner ",
+   StyleBox["WorldCartogram[metric]", "Input"],
+   " that pulls country polygons and statistical values from the \
 built-in ",
-      StyleBox["CountryData", "Input"],
-      " and returns a ready-to-publish figure. It supports any ",
-      StyleBox["ColorData", "Input"],
-      " gradient, a ",
-      StyleBox["GeoBackground -> \"Satellite\"", "Input"],
-      " mode that textures each country with deformed satellite \
+   StyleBox["CountryData", "Input"],
+   " and returns a ready-to-publish figure. It supports any ",
+   StyleBox["ColorData", "Input"],
+   " gradient, a ",
+   StyleBox["GeoBackground -> \"Satellite\"", "Input"],
+   " mode that textures each country with deformed satellite \
 imagery, user-supplied ",
-      StyleBox["Association", "Input"],
-      " input, and visualisation of the underlying space \
-deformation via a distortion grid."}],
+   StyleBox["Association", "Input"],
+   " input, visualisation of the underlying space deformation via a \
+distortion grid, and a ",
+   StyleBox["PerformanceGoal -> \"Speed\"", "Input"],
+   " default that runs the full world pipeline in under a minute."}],
       "Text"],
 
  imgCell["world_gdp_satellite.png",
@@ -108,18 +192,15 @@ region so that its area tells the story of a variable of \
 interest."}],
       "Text"],
 
- Cell[TextData[{"Gastner & Newman's elegant insight (PNAS 2004) \
-is that a map in which density ",
-      tex["$\\rho(\\mathbf{r})$"],
-      " is uniform is exactly what we want, and diffusion is the \
+ Cell[TextData[{"Gastner & Newman's elegant insight (PNAS 2004) is \
+that a map in which density ",
+   mathI[rhoOfR],
+   " is uniform is exactly what we want, and diffusion is the \
 natural process that takes any non-uniform density to a uniform \
 one. We therefore simulate the heat equation"}],
       "Text"],
 
- Cell[TextData[{tex["$$\\partial_t \\rho(\\mathbf{r}, t) = \\nabla^2 \
-\\rho(\\mathbf{r}, t), \\qquad \\mathbf{n}\\cdot\\nabla \\rho = 0 \
-\\text{ on } \\partial \\Omega$$"]}],
-      "Text", TextAlignment -> Center],
+ mathD[heatEq],
 
  Cell[TextData[{"on a rectangular domain with Neumann boundary \
 conditions (no flux through the box edge, so mass is conserved), \
@@ -127,14 +208,11 @@ and flow each geographic point through the instantaneous \
 velocity"}],
       "Text"],
 
- Cell[TextData[{tex["$$\\frac{d\\mathbf{r}}{dt} = \\mathbf{v}\
-(\\mathbf{r}, t) = -\\frac{\\nabla \\rho(\\mathbf{r}, t)}\
-{\\rho(\\mathbf{r}, t)}.$$"]}],
-      "Text", TextAlignment -> Center],
+ mathD[velEq],
 
  Cell[TextData[{"As ",
-      tex["$t \\to \\infty$"],
-      " the density relaxes to its spatial mean and the advected \
+   mathI[RowBox[{"t", "\[Rule]", "\[Infinity]"}]],
+   " the density relaxes to its spatial mean and the advected \
 points settle into their cartogram positions. Regions of high \
 initial density draw space inwards and therefore expand; regions \
 of low density are pushed outwards."}],
@@ -148,101 +226,125 @@ of low density are pushed outwards."}],
 
  Cell[TextData[{"Given a collection of country polygons and a \
 per-country metric ",
-      tex["$M_c$"],
-      " (population, GDP, \[Ellipsis]), we set the density inside \
+   mathI[Mc],
+   " (population, GDP, \[Ellipsis]), we set the density inside \
 polygon ",
-      tex["$c$"],
-      " to"}],
+   mathI["c"],
+   " to"}],
       "Text"],
 
- Cell[TextData[{tex["$$\\rho_0(\\mathbf{r}) = \\frac{M_c}{A_c} \
-\\quad \\text{for } \\mathbf{r} \\in c,$$"]}],
-      "Text", TextAlignment -> Center],
+ mathD[densityEq],
 
- Cell[TextData[{"where ", tex["$A_c$"],
-      " is the geographic area of ", tex["$c$"],
-      ". Integrated over ", tex["$c$"],
-      " we recover the metric ", tex["$M_c$"],
-      ". Ocean cells are filled with the mean land density so the \
+ Cell[TextData[{"where ",
+   mathI[Ac],
+   " is the geographic area of ",
+   mathI["c"],
+   ". Integrated over ",
+   mathI["c"],
+   " we recover the metric ",
+   mathI[Mc],
+   ". Ocean cells are filled with the mean land density so the \
 spatial mean is uniform across the domain and oceans retain their \
 size; only the relative sizes of countries change."}],
       "Text"],
 
  Cell[TextData[{"The rasterisation uses a ",
-      StyleBox["RegionMember", "Input"],
-      "-based subpixel test for anti-aliasing on thin/small \
+   StyleBox["RegionMember", "Input"],
+   "-based subpixel test for anti-aliasing on thin/small \
 countries."}],
       "Text"],
 
  Cell["2.2 Solve the diffusion equation", "Subsection"],
 
  Cell[TextData[{"The Laplacian on a rectangle with Neumann boundary \
-conditions is diagonalised by the cosine basis. Wolfram's built-in \
-",
-      StyleBox["FourierDCT[\[CenterEllipsis], 2]", "Input"],
-      " and ",
-      StyleBox["FourierDCT[\[CenterEllipsis], 3]", "Input"],
-      " implement the DCT-II and its inverse in any number of \
+conditions is diagonalised by the cosine basis. Wolfram's built-in ",
+   StyleBox["FourierDCT[\[CenterEllipsis], 2]", "Input"],
+   " and ",
+   StyleBox["FourierDCT[\[CenterEllipsis], 3]", "Input"],
+   " implement the DCT-II and its inverse in any number of \
 dimensions with an orthonormal convention, so the full 2D \
 spectrum is one call each. Expanding"}],
       "Text"],
 
- Cell[TextData[{tex["$$\\rho(\\mathbf{r}, t) = \\sum_{m, n} \\hat\
-\\rho_{mn} \\, e^{-\\lambda_{mn} t} \\, \\cos\\!\\left(\\frac{\\pi \
-m x}{L_x}\\right) \\cos\\!\\left(\\frac{\\pi n y}{L_y}\\right)$$"]}],
-      "Text", TextAlignment -> Center],
+ mathD[dctExpansion],
 
  Cell[TextData[{"with eigenvalues ",
-      tex["$\\lambda_{mn} = \\pi^2 \\!\\left(\\frac{m^2}{L_x^2} + \
-\\frac{n^2}{L_y^2}\\right)$"],
-      ", the density at any time ",
-      tex["$t$"],
-      " is evaluated in ",
-      tex["$\\mathcal{O}(N \\log N)$"],
-      " from the cached cosine coefficients ",
-      tex["$\\hat\\rho_{mn}$"],
-      "."}],
+   mathI[lambdaEq],
+   ", the density at any time ",
+   mathI["t"],
+   " is evaluated in ",
+   mathI[oNLogN],
+   " from the cached cosine coefficients ",
+   mathI[rhoHatMN],
+   "."}],
       "Text"],
 
  Cell["2.3 Advect points through the velocity field", "Subsection"],
 
- Cell[TextData[{"The velocity on the grid is"}],
-      "Text"],
-
- Cell[TextData[{tex["$$\\mathbf{v}(\\mathbf{r}, t) = -\\frac\
-{\\nabla \\rho(\\mathbf{r}, t)}{\\rho(\\mathbf{r}, t)},$$"]}],
-      "Text", TextAlignment -> Center],
-
- Cell[TextData[{"computed by central differences on the current \
-diffused grid and interpolated bilinearly at any query point. \
-Each geographic point is integrated from ",
-      tex["$t = 0$"],
-      " to ",
-      tex["$t^{\\star}$"],
-      " using an explicit Runge\[Dash]Kutta scheme ",
-      "(",
-      StyleBox[
-        "NDSolveValue[\[CenterEllipsis], Method -> \
+ Cell[TextData[{"The velocity on the grid is computed by central \
+differences on the current diffused grid and interpolated \
+bilinearly at any query point. Each geographic point is integrated \
+from ",
+   mathI[RowBox[{"t", "=", "0"}]], " to ",
+   mathI[tStar],
+   " using an explicit Runge\[Dash]Kutta scheme (",
+   StyleBox["NDSolveValue[\[CenterEllipsis], Method -> \
 \"ExplicitRungeKutta\"]", "Input"],
-      ") with a 5th-order stepper, where ",
-      tex["$t^{\\star}$"],
-      " is chosen from the decay constant of the slowest \
-non-constant Fourier mode."}],
+   ") with a 5th-order stepper, where ",
+   mathI[tStar],
+   " is chosen from the decay constant of the slowest non-constant \
+Fourier mode."}],
       "Text"],
 
  Cell["2.4 Pre-smoothing", "Subsection"],
 
  Cell[TextData[{"Because polygon-rasterisation produces step \
-functions, the initial velocity field is very stiff. We \
-pre-smooth the density with a small Gaussian filter (",
-      tex["$\\sigma \\sim 1$"],
-      " cell), which is mathematically equivalent to starting the \
+functions, the initial velocity field is very stiff. We pre-smooth \
+the density with a small Gaussian filter (",
+   mathI[RowBox[{sigmaSym, "\[TildeTilde]", "1"}]],
+   " cell), which is mathematically equivalent to starting the \
 diffusion at ",
-      tex["$t_0 = \\sigma^2 \\Delta x \\Delta y / 2$"],
-      ". A small background floor (",
-      StyleBox["MeanFloor", "Input"],
-      ") is added to avoid division by zero inside zero-density \
+   mathI[RowBox[{tZero, "=", sigmaSqDxDy}]],
+   ". A small background floor (",
+   StyleBox["MeanFloor", "Input"],
+   ") is added to avoid division by zero inside zero-density \
 cells."}],
+      "Text"],
+
+ Cell["2.5 Snapshot-cached advection (the default Speed mode)",
+      "Subsection"],
+
+ Cell[TextData[{"A naive implementation recomputes the full \
+inverse DCT of ",
+   mathI[rhoOfRt],
+   " at every RK sub-step of the advection ODE. With ~100+ \
+sub-steps on a 192\[Times]384 grid this dominates wall-clock at \
+~320 s for a single world map. The package avoids it: at \
+construction time we pre-compute a small (default 60) set of \
+geometrically-spaced snapshots of ",
+   mathI[RowBox[{"(", "\[Rho]", ",", " ",
+                  RowBox[{SubscriptBox["\[PartialD]", "x"],
+                          "\[Rho]"}], ",", " ",
+                  RowBox[{SubscriptBox["\[PartialD]", "y"],
+                          "\[Rho]"}], ")"}]],
+   ", spanning ",
+   mathI[RowBox[{"t", "=", "0"}]],
+   " through ",
+   mathI[tStar],
+   " with more samples packed near ",
+   mathI[RowBox[{"t", "=", "0"}]],
+   " where the fast Fourier modes collapse. During integration the \
+RHS linearly interpolates between the two bracketing snapshots \
+instead of doing a fresh inverse DCT. Median per-point agreement \
+with the Quality solver is sub-pixel at rendering resolution and \
+the full world pipeline drops from ~5\[ThinSpace]min to ~45 s \
+(~7\[Times] faster). Pass ",
+   StyleBox["PerformanceGoal -> \"Quality\"", "Input"],
+   " to any function that integrates points (",
+   StyleBox["AdvectPoints", "Input"], ", ",
+   StyleBox["CartogramRun", "Input"], ", ",
+   StyleBox["WorldCartogram", "Input"],
+   ") for the slower, bit-exact variant."}],
       "Text"],
 
  (* ---- Section 3: The package ---- *)
@@ -253,30 +355,29 @@ cells."}],
 
  Cell[TextData[{"Clone the repository from GitHub and load the \
 package directly from the ", StyleBox["CartogramWL/", "Input"],
-      " directory. The package has zero external dependencies."}],
+   " directory. The package has zero external dependencies."}],
       "Text"],
 
  Cell[BoxData["Get[\"/path/to/wolfram/CartogramWL/CartogramWL.wl\"]"],
       "Input"],
 
  Cell[TextData[{"All public symbols are then available in the ",
-      StyleBox["CartogramWL`", "Input"], " context:"}],
+   StyleBox["CartogramWL`", "Input"], " context:"}],
       "Text"],
 
- Cell[BoxData[
-   "Names[\"CartogramWL`*\"]"], "Input"],
+ Cell[BoxData["Names[\"CartogramWL`*\"]"], "Input"],
 
  Cell["3.2 Low-level primitives", "Subsection"],
 
  Cell[TextData[{"The algorithm is exposed as a handful of \
 composable functions that all operate on a density array ",
-      StyleBox["rho[[i, j]]", "Input"],
-      " with row index ",
-      tex["$i \\leftrightarrow y$"],
-      ", column index ",
-      tex["$j \\leftrightarrow x$"],
-      " (NumPy convention) and a bounding box ",
-      StyleBox["{xmin, ymin, xmax, ymax}", "Input"], ":"}],
+   StyleBox["rho[[i, j]]", "Input"],
+   " with row index ",
+   mathI[RowBox[{"i", " ", "\[LeftRightArrow]", " ", "y"}]],
+   ", column index ",
+   mathI[RowBox[{"j", " ", "\[LeftRightArrow]", " ", "x"}]],
+   " (NumPy convention) and a bounding box ",
+   StyleBox["{xmin, ymin, xmax, ymax}", "Input"], ":"}],
       "Text"],
 
  Cell[BoxData[
@@ -286,34 +387,35 @@ newPts = AdvectPoints[solver, {{x1, y1}, {x2, y2}, ...}];"],
       "Input"],
 
  Cell[TextData[{"One level up, ",
-      StyleBox["Cartogram", "Input"],
-      " bundles the pre-smoothing, mean floor, and \
+   StyleBox["Cartogram", "Input"],
+   " bundles the pre-smoothing, mean floor, and \
 ocean-preservation settings; ",
-      StyleBox["CartogramRun", "Input"],
-      " precomputes the deformed cell-centre grid; ",
-      StyleBox["CartogramTransform", "Input"],
-      " maps arbitrary points through the deformation; ",
-      StyleBox["CartogramTransformPolygon", "Input"],
-      " additionally densifies long edges before the transform."}],
+   StyleBox["CartogramRun", "Input"],
+   " precomputes the deformed cell-centre grid (Speed mode by \
+default, ~7\[Times] faster than Quality); ",
+   StyleBox["CartogramTransform", "Input"],
+   " maps arbitrary points through the deformation; ",
+   StyleBox["CartogramTransformPolygon", "Input"],
+   " additionally densifies long edges before the transform."}],
       "Text"],
 
  Cell[BoxData[
 "cart = Cartogram[rho, bbox, \n\
    \"MeanFloor\" -> 0.02, \"BlurSigma\" -> 1.5, \n\
    \"SeaDensity\" -> \"auto\"];\n\
-cart = CartogramRun[cart, \"Tol\" -> 2.*^-3];\n\
+cart = CartogramRun[cart, PerformanceGoal -> \"Speed\"];\n\
 newPoly = CartogramTransformPolygon[cart, polyRing];"], "Input"],
 
  Cell["3.3 The one-liner: WorldCartogram", "Subsection"],
 
  Cell[TextData[{"Most end users want \"given a metric, draw the \
 world\". ",
-      StyleBox["WorldCartogram", "Input"],
-      " wraps the whole pipeline, reads polygons and values from ",
-      StyleBox["CountryData", "Input"],
-      ", and returns a two-panel ",
-      StyleBox["GraphicsRow", "Input"],
-      " (geographic + cartogram)."}], "Text"],
+   StyleBox["WorldCartogram", "Input"],
+   " wraps the whole pipeline, reads polygons and values from ",
+   StyleBox["CountryData", "Input"],
+   ", and returns a two-panel ",
+   StyleBox["GraphicsRow", "Input"],
+   " (geographic + cartogram)."}], "Text"],
 
  Cell[BoxData[
 "WorldCartogram[\"Population\"]          (* or \"GDP\", \"GDPPerCapita\", ... *)\n\
@@ -323,28 +425,34 @@ WorldCartogram[{\"my metric\", <|\"Germany\" -> 83., ...|>}]"],
       "Input"],
 
  Cell[TextData[{"A complete option list is available via ",
-      StyleBox["?WorldCartogram", "Input"],
-      ". The most useful options are ",
-      StyleBox["\"ColorFunction\"", "Input"],
-      " (any ",
-      StyleBox["ColorData[\[Ellipsis]]", "Input"],
-      " gradient or a raw function on ",
-      tex["$[0,1]$"],
-      "), ",
-      StyleBox["\"Background\"", "Input"],
-      " (",
-      StyleBox["\"Flat\"", "Input"],
-      " or ",
-      StyleBox["\"Satellite\"", "Input"],
-      "), ",
-      StyleBox["\"MissingCountries\"", "Input"],
-      " (",
-      StyleBox["\"Hide\"", "Input"],
-      " or ",
-      StyleBox["\"ShowGrey\"", "Input"],
-      "), and ",
-      StyleBox["\"BoundingBox\"", "Input"],
-      " (useful for continent-scale maps)."}], "Text"],
+   StyleBox["?WorldCartogram", "Input"],
+   ". The most useful options are ",
+   StyleBox["\"ColorFunction\"", "Input"],
+   " (any ",
+   StyleBox["ColorData[\[Ellipsis]]", "Input"],
+   " gradient or a raw function on ",
+   mathI[RowBox[{"[", "0", ",", "1", "]"}]],
+   "), ",
+   StyleBox["\"Background\"", "Input"],
+   " (",
+   StyleBox["\"Flat\"", "Input"],
+   " or ",
+   StyleBox["\"Satellite\"", "Input"],
+   "), ",
+   StyleBox["\"MissingCountries\"", "Input"],
+   " (",
+   StyleBox["\"Hide\"", "Input"],
+   " or ",
+   StyleBox["\"ShowGrey\"", "Input"],
+   "), ",
+   StyleBox["\"BoundingBox\"", "Input"],
+   " (useful for continent-scale maps), and ",
+   StyleBox["PerformanceGoal", "Input"],
+   " (",
+   StyleBox["\"Speed\"", "Input"],
+   " default, or ",
+   StyleBox["\"Quality\"", "Input"],
+   " for bit-exact output)."}], "Text"],
 
  (* ---- Section 4: Demos ---- *)
 
@@ -381,10 +489,10 @@ visibly bulge; Africa and parts of South Asia contract."}],
  Cell["5. Colour schemes & satellite background", "Section"],
 
  Cell[TextData[{"Pass any ",
-      StyleBox["ColorData", "Input"],
-      " gradient as ",
-      StyleBox["\"ColorFunction\"", "Input"],
-      ":"}], "Text"],
+   StyleBox["ColorData", "Input"],
+   " gradient as ",
+   StyleBox["\"ColorFunction\"", "Input"],
+   ":"}], "Text"],
 
  Cell[BoxData[
 "WorldCartogram[\"PopulationDensity\",\n\
@@ -394,11 +502,11 @@ visibly bulge; Africa and parts of South Asia contract."}],
  imgCell["world_population_density_temperaturemap.png"],
 
  Cell[TextData[{"Set ",
-      StyleBox["\"Background\" -> \"Satellite\"", "Input"],
-      " and each country is textured with the corresponding patch \
+   StyleBox["\"Background\" -> \"Satellite\"", "Input"],
+   " and each country is textured with the corresponding patch \
 of Wolfram's ",
-      StyleBox["GeoBackground -> \"Satellite\"", "Input"],
-      " imagery. On the cartogram side the imagery is deformed \
+   StyleBox["GeoBackground -> \"Satellite\"", "Input"],
+   " imagery. On the cartogram side the imagery is deformed \
 along with the country geometry, giving an effect similar to a \
 shaded-relief globe being inflated or deflated locally."}],
       "Text"],
@@ -415,28 +523,26 @@ shaded-relief globe being inflated or deflated locally."}],
  Cell[TextData[{"A clean way to see the geometry of the \
 transformation is to overlay a regular 15\[Degree] lat/lon grid \
 on both panels. On the left the grid is undistorted; on the \
-right the ",
-      tex["$325$"],
-      " grid intersections are pushed into the cartogram by the \
-same velocity field that reshaped the countries. The grid \
-therefore encodes the local stretching/compression factor at \
-every point of the domain."}], "Text"],
+right the 325 grid intersections are pushed into the cartogram \
+by the same velocity field that reshaped the countries. The \
+grid therefore encodes the local stretching/compression factor \
+at every point of the domain."}], "Text"],
 
  imgCell["distortion_grid.png",
   "Figure 2. Left: geographic frame, regular 15\[Degree] grid in \
-red, countries grey. Right: the GDP cartogram, the same grid \
-now warped by the same diffusion flow. Grid cells over \
-high-wealth regions shrink (fewer dollars per square millimetre); \
-cells over oceans and sparsely populated continents stretch."],
+red, countries grey. Right: the GDP cartogram, the same grid now \
+warped by the same diffusion flow. Grid cells over high-wealth \
+regions shrink (fewer dollars per square millimetre); cells over \
+oceans and sparsely populated continents stretch."],
 
  Cell[TextData[{StyleBox["CartogramDistortionGrid[cart]", "Input"],
-      " returns the ",
-      StyleBox["Line", "Input"],
-      " primitives for the warped grid; wrap in ",
-      StyleBox["Graphics", "Input"],
-      " to draw, overlay on a ",
-      StyleBox["WorldCartogram", "Input"],
-      " result to annotate a cartogram with its own distortion \
+   " returns the ",
+   StyleBox["Line", "Input"],
+   " primitives for the warped grid; wrap in ",
+   StyleBox["Graphics", "Input"],
+   " to draw, overlay on a ",
+   StyleBox["WorldCartogram", "Input"],
+   " result to annotate a cartogram with its own distortion \
 field."}], "Text"],
 
  (* ---- Section 7: Custom data ---- *)
@@ -444,15 +550,15 @@ field."}], "Text"],
  Cell["7. Bringing your own data", "Section"],
 
  Cell[TextData[{"Any ",
-      StyleBox["Association", "Input"],
-      " of country-identifier \[RightArrow] value works in place \
+   StyleBox["Association", "Input"],
+   " of country-identifier \[RightArrow] value works in place \
 of a metric string. Keys may be ",
-      StyleBox["CountryData", "Input"],
-      " identifiers (e.g. ",
-      StyleBox["\"UnitedStates\"", "Input"],
-      ") or display names (",
-      StyleBox["\"United States\"", "Input"],
-      ")."}],
+   StyleBox["CountryData", "Input"],
+   " identifiers (e.g. ",
+   StyleBox["\"UnitedStates\"", "Input"],
+   ") or display names (",
+   StyleBox["\"United States\"", "Input"],
+   ")."}],
       "Text"],
 
  Cell[BoxData[
@@ -474,26 +580,34 @@ deforms because diffusion is global."],
  Cell["8. Implementation notes", "Section"],
 
  Cell[TextData[{
-   "\[Bullet] ", "Only the diffusion is done in Fourier space; \
-advection uses an RK45 stepper over the reconstructed velocity. \
-Modes below a relative tolerance (",
-   tex["$10^{-3}$"],
+   "\[Bullet] ",
+   "Only the diffusion is done in Fourier space; advection uses \
+NDSolveValue's RK45 stepper over the reconstructed velocity. Modes \
+below a relative tolerance (",
+   mathI[SuperscriptBox["10", RowBox[{"-", "3"}]]],
    " by default) are considered extinct, giving ",
-   tex["$t^{\\star}$"],
-   ".\n\[Bullet] ", "Heavy-tailed metrics (Monaco on population \
-density, Luxembourg on GDP per capita) produce enormous \
-per-cell densities that can destabilise the advection. \
-",
+   mathI[tStar],
+   ".\n\[Bullet] ",
+   "Speed mode replaces the per-sub-step inverse DCT with a \
+linear interpolation between 60 log-spaced density/gradient \
+snapshots, giving sub-pixel agreement with Quality at ~7\[Times] \
+the throughput. Switch to ",
+   StyleBox["PerformanceGoal -> \"Quality\"", "Input"],
+   " when you need bit-exact reproduction.\n\[Bullet] ",
+   "Heavy-tailed metrics (Monaco on population density, Luxembourg \
+on GDP per capita) produce enormous per-cell densities that can \
+destabilise the advection. ",
    StyleBox["WorldCartogram", "Input"],
-   " clamps values at a configurable fraction of the mean and \
-caps the rasterised grid at a multiple of the positive-cell \
-mean.\n\[Bullet] ", "Long country edges are densified before \
-being transformed, matching ",
+   " clamps values at a configurable fraction of the mean and caps \
+the rasterised grid at a multiple of the positive-cell mean.\n\
+\[Bullet] ",
+   "Long country edges are densified before being transformed, \
+matching ",
    StyleBox["shapely.segmentize", "Input"],
-   " on the Python side of this project.\n\[Bullet] ", "The \
-algorithm is grid-convention-compatible with the Python \
+   " on the Python side of this project.\n\[Bullet] ",
+   "The algorithm is grid-convention-compatible with the Python \
 implementation so the two are drop-in interchangeable for \
-debugging/cross-validation."}], "Text"],
+debugging / cross-validation."}], "Text"],
 
  Cell["9. References", "Section"],
 

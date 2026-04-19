@@ -90,7 +90,13 @@ mult*mean(positiveCells);\n\
   \"Label\"              -> text used in the panel title (Automatic = \
 derived from the metric);\n\
   \"MissingCountries\"   -> \"Hide\" (default — drop countries with no \
-value) or \"ShowGrey\" (render them in grey, no density contribution).\n\n\
+value) or \"ShowGrey\" (render them in grey, no density contribution);\n\
+  PerformanceGoal      -> \"Speed\" (default — snapshot-cached \
+advection RHS, ~7x faster, sub-pixel agreement with Quality) or \
+\"Quality\" (bit-exact baseline, re-evaluates the inverse DCT at \
+every RK45 sub-step);\n\
+  \"Snapshots\"          -> snapshot count when PerformanceGoal is \
+\"Speed\" (default 60).\n\n\
 Returns a GraphicsRow containing the geographic panel on the left and \
 the density-equalised cartogram on the right. Use Export or Rasterize \
 to save the result.";
@@ -208,12 +214,92 @@ bilinearSample[field_, bbox_, dx_, dy_, xq_, yq_] := Module[
    using an explicit RK method. y is the flat state vector of
    {x1,...,xN, y1,...,yN}.
 ===================================================================== *)
+(* Vectorised central gradient — array shifts replace the per-row /
+   per-column Do loops. Used by the snapshot builder. *)
+fastCentralGradient[m_, dy_, dx_] := Module[{ny, nx, gy, gx},
+  {ny, nx} = Dimensions[m];
+  gy = (RotateLeft[m, {1, 0}] - RotateRight[m, {1, 0}])/(2. dy);
+  gx = (RotateLeft[m, {0, 1}] - RotateRight[m, {0, 1}])/(2. dx);
+  gy[[1, All]]   = (m[[2, All]]    - m[[1, All]])/dy;
+  gy[[ny, All]]  = (m[[ny, All]]   - m[[ny - 1, All]])/dy;
+  gx[[All, 1]]   = (m[[All, 2]]    - m[[All, 1]])/dx;
+  gx[[All, nx]]  = (m[[All, nx]]   - m[[All, nx - 1]])/dx;
+  {gy, gx}];
+
+(* Snapshot time grid: geometric spacing from t0 = 0.1/lambda_max
+   (well before the fastest Fourier mode collapses) out to tMax,
+   with t=0 prepended. A power-law or linear schedule misses the
+   fast-mode dynamics on domains where tMax >> 1/lambda_max (e.g.
+   the world bbox has tMax ~ 1e4 while 1/lambda_max ~ 0.1). *)
+buildSnapshots[solver_, tMax_, nSnaps_] := Module[
+  {tGrid, rho, gy, gx, out, dx, dy, lamMax, t0, ratio},
+  dx = solver["dx"]; dy = solver["dy"];
+  lamMax = Max[solver["lam"]];
+  t0 = Min[0.1/Max[lamMax, 1.*^-12], tMax/1000.];
+  ratio = (tMax/t0)^(1./(nSnaps - 1));
+  tGrid = Prepend[
+    Table[t0 * ratio^(k - 1), {k, 1, nSnaps}], 0.];
+  out = Table[
+    rho = DensityAt[solver, tGrid[[k + 1]]];
+    {gy, gx} = fastCentralGradient[rho, dy, dx];
+    {rho, gx, gy},
+    {k, 0, nSnaps}];
+  {tGrid, out}];
+
+(* Look up the snapshot bracket containing tNow and return a
+   linearly-interpolated {rho, gx, gy} triple. *)
+interpSnapshot[tGrid_, snapshots_, tNow_] := Module[
+  {k, alpha, a, b},
+  k = Clip[Ceiling[(tNow - tGrid[[1]])/(tGrid[[-1]] - tGrid[[1]]) *
+          (Length[tGrid] - 1)], {1, Length[tGrid] - 1}];
+  While[tGrid[[k]] > tNow && k > 1, k--];
+  While[k < Length[tGrid] - 1 && tGrid[[k + 1]] < tNow, k++];
+  alpha = (tNow - tGrid[[k]])/(tGrid[[k + 1]] - tGrid[[k]]);
+  alpha = Clip[alpha, {0., 1.}];
+  a = snapshots[[k]]; b = snapshots[[k + 1]];
+  {(1 - alpha) a[[1]] + alpha b[[1]],
+   (1 - alpha) a[[2]] + alpha b[[2]],
+   (1 - alpha) a[[3]] + alpha b[[3]]}];
+
+(* Vectorised bilinear sampler — same semantics as bilinearSample
+   but flattens the field once and indexes all query points in one
+   Part[] call. *)
+fastBilinearSample[field_, bbox_, dx_, dy_, xq_, yq_] := Module[
+  {ny, nx, xmin, ymin, fx, fy, j0, i0, j1, i1, tx, ty,
+   f00, f01, f10, f11, flat, idx00, idx01, idx10, idx11},
+  {ny, nx} = Dimensions[field];
+  {xmin, ymin} = bbox[[{1, 2}]];
+  fx = (xq - xmin)/dx - 0.5;
+  fy = (yq - ymin)/dy - 0.5;
+  fx = Clip[fx, {0., nx - 1.0000000001}];
+  fy = Clip[fy, {0., ny - 1.0000000001}];
+  j0 = Floor[fx]; i0 = Floor[fy];
+  j1 = Clip[j0 + 1, {0, nx - 1}];
+  i1 = Clip[i0 + 1, {0, ny - 1}];
+  tx = fx - j0; ty = fy - i0;
+  flat = Flatten[field];
+  idx00 = i0 * nx + j0 + 1;
+  idx01 = i0 * nx + j1 + 1;
+  idx10 = i1 * nx + j0 + 1;
+  idx11 = i1 * nx + j1 + 1;
+  f00 = flat[[idx00]];
+  f01 = flat[[idx01]];
+  f10 = flat[[idx10]];
+  f11 = flat[[idx11]];
+  (1 - ty) ((1 - tx) f00 + tx f01) + ty ((1 - tx) f10 + tx f11)];
+
 AdvectPoints[solver_Association, pts_?(MatrixQ[#, NumericQ] &),
              OptionsPattern[{"TMax" -> Automatic, "Tol" -> 10.^-3,
                              "AccuracyGoal" -> 5,
                              "PrecisionGoal" -> 4,
-                             "MaxStepFraction" -> 1/64}]] := Module[
-  {n, tMax, dx, dy, bbox, rhsFn, sol, t, Y, y0, state, final},
+                             "MaxStepFraction" -> 1/64,
+                             PerformanceGoal -> "Speed",
+                             "Snapshots" -> 60}]] := Module[
+  {goal, n, tMax, dx, dy, bbox, rhsFn, tGrid, snapshots, t, Y, y0,
+   state, final},
+  goal = OptionValue[PerformanceGoal];
+  If[! MemberQ[{"Quality", "Speed"}, goal],
+     Message[AdvectPoints::pgoal, goal]; Return[$Failed]];
   n = Length[pts];
   tMax = OptionValue["TMax"];
   If[tMax === Automatic, tMax = ConvergenceTime[solver,
@@ -221,19 +307,29 @@ AdvectPoints[solver_Association, pts_?(MatrixQ[#, NumericQ] &),
   tMax = N@tMax;
   dx = solver["dx"]; dy = solver["dy"]; bbox = solver["bbox"];
 
-  rhsFn[tNow_?NumericQ, stateVec_?VectorQ] := Module[
-    {rho, gx, gy, xq, yq, rhoQ, gxQ, gyQ, vx, vy},
-    {rho, gx, gy} = DensityAndGradientAt[solver, tNow];
-    xq = stateVec[[1 ;; n]];
-    yq = stateVec[[n + 1 ;; 2 n]];
-    rhoQ = bilinearSample[rho, bbox, dx, dy, xq, yq];
-    gxQ  = bilinearSample[gx,  bbox, dx, dy, xq, yq];
-    gyQ  = bilinearSample[gy,  bbox, dx, dy, xq, yq];
-    rhoQ = Map[Max[#, 1.*^-300] &, rhoQ];
-    vx = -gxQ/rhoQ;
-    vy = -gyQ/rhoQ;
-    Join[vx, vy]
-  ];
+  If[goal === "Speed",
+    {tGrid, snapshots} = buildSnapshots[solver, tMax,
+                                         OptionValue["Snapshots"]];
+    rhsFn[tNow_?NumericQ, stateVec_?VectorQ] := Module[
+      {rho, gx, gy, xq, yq, rhoQ, gxQ, gyQ},
+      {rho, gx, gy} = interpSnapshot[tGrid, snapshots, tNow];
+      xq = stateVec[[1 ;; n]];
+      yq = stateVec[[n + 1 ;; 2 n]];
+      rhoQ = fastBilinearSample[rho, bbox, dx, dy, xq, yq];
+      gxQ  = fastBilinearSample[gx,  bbox, dx, dy, xq, yq];
+      gyQ  = fastBilinearSample[gy,  bbox, dx, dy, xq, yq];
+      rhoQ = Map[Max[#, 1.*^-300] &, rhoQ];
+      Join[-gxQ/rhoQ, -gyQ/rhoQ]],
+    rhsFn[tNow_?NumericQ, stateVec_?VectorQ] := Module[
+      {rho, gx, gy, xq, yq, rhoQ, gxQ, gyQ},
+      {rho, gx, gy} = DensityAndGradientAt[solver, tNow];
+      xq = stateVec[[1 ;; n]];
+      yq = stateVec[[n + 1 ;; 2 n]];
+      rhoQ = bilinearSample[rho, bbox, dx, dy, xq, yq];
+      gxQ  = bilinearSample[gx,  bbox, dx, dy, xq, yq];
+      gyQ  = bilinearSample[gy,  bbox, dx, dy, xq, yq];
+      rhoQ = Map[Max[#, 1.*^-300] &, rhoQ];
+      Join[-gxQ/rhoQ, -gyQ/rhoQ]]];
 
   y0 = N@Join[pts[[All, 1]], pts[[All, 2]]];
 
@@ -251,6 +347,8 @@ AdvectPoints[solver_Association, pts_?(MatrixQ[#, NumericQ] &),
   final = state[tMax];
   Transpose[{final[[1 ;; n]], final[[n + 1 ;; 2 n]]}]
 ];
+AdvectPoints::pgoal = "PerformanceGoal must be \"Quality\" or \
+\"Speed\"; got `1`.";
 
 (* =====================================================================
    Cartogram wrapper. Applies the mean_floor + blur_sigma +
@@ -293,7 +391,9 @@ Cartogram::neg = "rho must be non-negative.";
 Cartogram::allzero = "rho is identically zero.";
 
 CartogramRun[cart_Association,
-             OptionsPattern[{"Tol" -> 10.^-3}]] := Module[
+             OptionsPattern[{"Tol" -> 10.^-3,
+                             PerformanceGoal -> "Speed",
+                             "Snapshots" -> 60}]] := Module[
   {solver, xs, ys, pts, tMax, moved, ny, nx, xmin, ymin, xmax, ymax,
    dx, dy},
   solver = cart["solver"];
@@ -304,7 +404,10 @@ CartogramRun[cart_Association,
   ys = Table[ymin + (i - 0.5) dy, {i, 1, ny}];
   pts = Flatten[Table[{xs[[j]], ys[[i]]}, {i, 1, ny}, {j, 1, nx}], 1];
   tMax = ConvergenceTime[solver, OptionValue["Tol"]];
-  moved = AdvectPoints[solver, pts, "TMax" -> tMax];
+  moved = AdvectPoints[solver, pts,
+    "TMax" -> tMax,
+    PerformanceGoal -> OptionValue[PerformanceGoal],
+    "Snapshots" -> OptionValue["Snapshots"]];
   moved = MapThread[{Clip[#1, {xmin, xmax}], Clip[#2, {ymin, ymax}]} &,
                     {moved[[All, 1]], moved[[All, 2]]}];
   Append[cart, "deformedGrid" -> moved]
@@ -463,7 +566,9 @@ Options[WorldCartogram] = {
   "ImageSize"         -> 900,
   "Label"             -> Automatic,
   "MaxEdge"           -> 2.0,
-  "MissingCountries"  -> "Hide"  (* "Hide" | "ShowGrey" *)
+  "MissingCountries"  -> "Hide", (* "Hide" | "ShowGrey" *)
+  PerformanceGoal     -> "Speed", (* "Speed" | "Quality" *)
+  "Snapshots"         -> 60
 };
 
 (* Map a metric argument to {label, fn, defFloorFrac, defCeilMult}. *)
@@ -600,7 +705,10 @@ WorldCartogram[metric_, opts : OptionsPattern[]] := Module[
     "MeanFloor"  -> OptionValue["MeanFloor"],
     "BlurSigma"  -> OptionValue["BlurSigma"],
     "SeaDensity" -> "auto"];
-  cart = CartogramRun[cart, "Tol" -> OptionValue["Tolerance"]];
+  cart = CartogramRun[cart,
+    "Tol"            -> OptionValue["Tolerance"],
+    PerformanceGoal  -> OptionValue[PerformanceGoal],
+    "Snapshots"      -> OptionValue["Snapshots"]];
 
   transformRing[ring_] :=
     CartogramTransformPolygon[cart, ring, "MaxEdge" -> maxEdge];

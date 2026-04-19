@@ -127,6 +127,13 @@ WorldCartogram[{"my metric", myData},
    value; "ShowGrey" draws them in grey with no density contribution. *)
 WorldCartogram[{"G20 population", g20Data},
    "MissingCountries" -> "ShowGrey"]
+
+(* PerformanceGoal: "Speed" (default, ~7x faster via snapshot-cached
+   advection, sub-pixel agreement with Quality) or "Quality" for the
+   bit-exact baseline that re-evaluates the inverse DCT at every RK
+   sub-step. All three functions that integrate points accept it:
+   AdvectPoints, CartogramRun, WorldCartogram. *)
+WorldCartogram["GDP", PerformanceGoal -> "Quality"]
 ```
 
 `?WorldCartogram` inside a notebook prints the full option list.
@@ -148,7 +155,9 @@ cart = Cartogram[rho, bbox,
     "MeanFloor"   -> 0.02,
     "BlurSigma"   -> 1.5,
     "SeaDensity"  -> "auto"];     (* "auto" = preserve ocean area *)
-cart = CartogramRun[cart, "Tol" -> 2.*^-3];
+cart = CartogramRun[cart,           (* Speed mode by default *)
+    "Tol"            -> 2.*^-3,
+    PerformanceGoal  -> "Speed"];   (* or "Quality" for bit-exact *)
 
 newPts   = CartogramTransform[cart, pts];
 newPoly  = CartogramTransformPolygon[cart, polyCoords];

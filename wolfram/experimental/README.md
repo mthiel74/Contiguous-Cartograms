@@ -1,5 +1,12 @@
 # experimental/ — improvement ideas for CartogramWL
 
+> **Update.** The snapshot-cached advection path described below has
+> been merged into the main `CartogramWL.wl` package and is now the
+> default (`PerformanceGoal -> "Speed"`). Pass
+> `PerformanceGoal -> "Quality"` to `AdvectPoints`, `CartogramRun` or
+> `WorldCartogram` to get the bit-exact baseline. This directory is
+> kept as a historical record of what was measured and tried.
+
 This directory is a sandbox. Nothing in the public `wolfram/CartogramWL`
 package is modified. We benchmark the existing implementation,
 prototype alternatives, and measure the wins (or losses) honestly.
