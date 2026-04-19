@@ -11,6 +11,7 @@ examples/output/
 examples/data/
 *.png
 !docs/**/*.png
+!wolfram/docs/**/*.png
 
 # Editors
 .idea/
