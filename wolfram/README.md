@@ -16,6 +16,35 @@ Built from Wolfram's bundled `CountryData`.
 
 ![world](docs/images/world.png)
 
+### Other built-in metrics
+
+Driven by a single parameterised script (`examples/world_metric.wls`)
+and the reusable `WorldCartogram[]` function (see below). Every image
+on this page is produced from the same pipeline — only the metric,
+the `"ColorFunction"` option, and the `"Background"` option change.
+
+| Metric | Image |
+|---|---|
+| `GDP` (USD / year) | ![gdp](docs/images/world_gdp.png) |
+| `GDPPerCapita` | ![gdppc](docs/images/world_gdp_per_capita.png) |
+| `PopulationDensity` | ![popdens](docs/images/world_population_density.png) |
+
+### Custom colour schemes
+
+Pass any Wolfram `ColorData[…]` gradient as `"ColorFunction"`. Example
+using `TemperatureMap` on the population-density cartogram:
+
+![popdens-temp](docs/images/world_population_density_temperaturemap.png)
+
+### `GeoBackground -> "Satellite"`
+
+Set `"Background" -> "Satellite"` and each country is textured with
+the corresponding patch of satellite imagery — on the cartogram side
+the imagery is deformed to match the density-equalised geometry.
+Example, the GDP cartogram with the satellite surface of the Earth:
+
+![gdp-sat](docs/images/world_gdp_satellite.png)
+
 ## Requirements
 
 * Wolfram Engine / Mathematica ≥ 13.0 (tested on WolframKernel 15.0).
@@ -28,12 +57,13 @@ Nothing else — the package uses only built-in symbols.
 ```
 wolfram/
     CartogramWL/
-        CartogramWL.wl     # the package
+        CartogramWL.wl     # the package (algorithm + WorldCartogram)
     examples/
         synthetic.wls      # 4x4 synthetic demo
         world.wls          # world population cartogram
+        world_metric.wls   # CLI wrapper over WorldCartogram[]
     tests/
-        test_basic.wls     # 7 regression tests
+        test_basic.wls     # regression tests
     docs/images/           # generated PNGs committed with the repo
 ```
 
@@ -50,7 +80,56 @@ wolframscript -file examples/synthetic.wls
 
 # World demo (~1 min, uses Wolfram's CountryData so no download):
 wolframscript -file examples/world.wls
+
+# Parameterised driver: <metric> [<colorScheme>] [<bg>]
+wolframscript -file examples/world_metric.wls gdp
+wolframscript -file examples/world_metric.wls gdp_per_capita
+wolframscript -file examples/world_metric.wls population_density
+wolframscript -file examples/world_metric.wls gdp SunsetColors satellite
+wolframscript -file examples/world_metric.wls population_density TemperatureMap
 ```
+
+### Calling from a notebook
+
+```wolfram
+Needs["CartogramWL`"];
+
+(* One-liner — Gastner-Newman cartogram of every country's population. *)
+fig = WorldCartogram["Population"];
+
+(* Change the colour scheme. *)
+WorldCartogram["GDP", "ColorFunction" -> ColorData["TemperatureMap"]]
+
+(* Use satellite imagery instead of solid colours — each country is
+   textured with the corresponding patch of GeoBackground -> "Satellite",
+   deformed to match the cartogram. *)
+WorldCartogram["GDP", "Background" -> "Satellite"]
+
+(* Any CountryData property works too — e.g. life expectancy. *)
+WorldCartogram["LifeExpectancy",
+   "ColorFunction" -> ColorData["ThermometerColors"]]
+
+(* Or supply a custom {label, fn} pair for derived quantities. *)
+WorldCartogram[{"CO2 per capita",
+   Function[c, Quantity[QuantityMagnitude[CountryData[c, "CO2Emissions"]] /
+                        QuantityMagnitude[CountryData[c, "Population"]],
+                        "Tonnes/Person/Year"]]}]
+
+(* Feed your own data in as an Association — keys may be CountryData
+   identifiers ("UnitedStates") or common names ("United States");
+   countries missing from the Association are skipped. *)
+myData = <|"Germany" -> 83.0, "France" -> 67.5, "Italy" -> 59.1,
+           "Spain" -> 47.6, "Poland" -> 38.0|>;
+WorldCartogram[{"my metric", myData},
+   "BoundingBox" -> {-15., 30., 45., 70.}]
+
+(* Missing-data handling: "Hide" (default) drops countries with no
+   value; "ShowGrey" draws them in grey with no density contribution. *)
+WorldCartogram[{"G20 population", g20Data},
+   "MissingCountries" -> "ShowGrey"]
+```
+
+`?WorldCartogram` inside a notebook prints the full option list.
 
 ## API cheat sheet
 
