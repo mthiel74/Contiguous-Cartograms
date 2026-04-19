@@ -303,6 +303,16 @@ ocean cells (cells with zero input density) to the mean of the land
 cells, so the total density is uniform. The cartogram then only
 redistributes material within the land.
 
+## Wolfram-Language port
+
+A standalone port of the algorithm lives in [`wolfram/`](wolfram/), for
+users who prefer to stay inside Mathematica or want a `wolframscript`
+command-line entry point. It mirrors the Python package's core — same
+DCT-II spectral diffusion, same bilinear advection, same ocean
+preservation — in a few hundred lines, using only built-in Wolfram
+functionality (no external packages required). See
+[`wolfram/README.md`](wolfram/README.md) for the API and demos.
+
 ## Repository layout
 
 ```
@@ -327,6 +337,11 @@ tests/
     test_diffusion.py
     test_advect.py
 docs/images/               # rendered demos committed to the repo
+wolfram/
+    CartogramWL/           # Wolfram-Language port
+    examples/              # synthetic + world CountryData demos
+    tests/                 # 7 regression tests
+    docs/images/
 ```
 
 ## Testing
