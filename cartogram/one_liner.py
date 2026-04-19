@@ -259,8 +259,10 @@ def world_cartogram(
 
     fig = None
     if render:
-        fig = _render_side_by_side(
-            gdf, deformed, value_label, cmap=cmap,
+        from .render import side_by_side
+        fig = side_by_side(
+            gdf, deformed, value_label,
+            cmap=cmap,
             has_value_mask=has_value_mask,
         )
 
@@ -278,92 +280,3 @@ def world_cartogram(
     )
 
 
-def _render_side_by_side(
-    gdf, deformed, label: str,
-    cmap: str = "plasma",
-    has_value_mask=None,
-):
-    """Two-panel geographic + cartogram figure.
-
-    Same log1p colour scale on both panels so the eye compares
-    directly. If ``has_value_mask`` is supplied, rows where the mask is
-    False are rendered in neutral grey on both panels (see the
-    ``missing_countries="grey"`` option).
-    """
-    import matplotlib.pyplot as plt
-    from matplotlib.colors import LogNorm, Normalize
-
-    vals = gdf["value"].to_numpy(dtype=float)
-    if has_value_mask is None:
-        mask = np.ones(len(vals), dtype=bool)
-    else:
-        mask = np.asarray(has_value_mask, dtype=bool)
-
-    finite = vals[mask & np.isfinite(vals) & (vals > 0)]
-    if finite.size == 0:
-        norm = Normalize(vmin=0, vmax=1)
-    else:
-        vmin = float(finite.min())
-        vmax = float(finite.max())
-        if vmax / max(vmin, 1e-12) > 50:
-            norm = LogNorm(vmin=vmin, vmax=vmax)
-        else:
-            norm = Normalize(vmin=vmin, vmax=vmax)
-
-    grey = "#d9d9d9"
-    valued_gdf = gdf.loc[mask]
-    missing_gdf = gdf.loc[~mask]
-
-    fig, (ax_geo, ax_cart) = plt.subplots(
-        1, 2, figsize=(18, 6), constrained_layout=True
-    )
-
-    if not missing_gdf.empty:
-        missing_gdf.plot(
-            ax=ax_geo, color=grey,
-            edgecolor="black", linewidth=0.2,
-        )
-    if not valued_gdf.empty:
-        valued_gdf.plot(
-            column="value", ax=ax_geo, cmap=cmap, norm=norm,
-            edgecolor="black", linewidth=0.2,
-        )
-    ax_geo.set_title("Geographic")
-    ax_geo.set_aspect("equal")
-    ax_geo.set_xticks([]); ax_geo.set_yticks([])
-
-    import geopandas as gpd
-    deformed_list = list(deformed)
-    if missing_gdf.empty:
-        missing_deformed = gpd.GeoDataFrame(
-            {"value": []}, geometry=[], crs=gdf.crs
-        )
-    else:
-        missing_idx = np.where(~mask)[0]
-        missing_deformed = gpd.GeoDataFrame(
-            {"value": vals[~mask]},
-            geometry=[deformed_list[i] for i in missing_idx],
-            crs=gdf.crs,
-        )
-    valued_idx = np.where(mask)[0]
-    valued_deformed = gpd.GeoDataFrame(
-        {"value": vals[mask]},
-        geometry=[deformed_list[i] for i in valued_idx],
-        crs=gdf.crs,
-    )
-
-    if not missing_deformed.empty:
-        missing_deformed.plot(
-            ax=ax_cart, color=grey,
-            edgecolor="black", linewidth=0.2,
-        )
-    if not valued_deformed.empty:
-        valued_deformed.plot(
-            column="value", ax=ax_cart, cmap=cmap, norm=norm,
-            edgecolor="black", linewidth=0.2,
-        )
-    ax_cart.set_title(f"Cartogram (area ∝ {label}, oceans preserved)")
-    ax_cart.set_aspect("equal")
-    ax_cart.set_xticks([]); ax_cart.set_yticks([])
-
-    return fig

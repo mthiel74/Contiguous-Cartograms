@@ -22,6 +22,7 @@ __all__ = [
     "warp_image",
     "world_cartogram",
     "WorldCartogramResult",
+    "side_by_side",
 ]
 
 
@@ -40,6 +41,9 @@ def __getattr__(name: str):
     if name == "WorldCartogramResult":
         from .one_liner import WorldCartogramResult
         return WorldCartogramResult
+    if name == "side_by_side":
+        from .render import side_by_side
+        return side_by_side
     raise AttributeError(f"module 'cartogram' has no attribute {name!r}")
 
 __version__ = "0.1.0"
