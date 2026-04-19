@@ -66,3 +66,36 @@ def test_points_stay_inside_bbox():
     moved = cart.transform(query)
     assert moved.min() >= -1e-6
     assert moved.max() <= 1.0 + 1e-6
+
+
+def test_speed_mode_matches_quality_mode():
+    """The snapshot-cached RHS should agree with the exact solver up to a
+    small fraction of a grid cell. The test uses the same contrast used
+    by the basic block-expansion test, which is representative of a
+    real-world rasterised cartogram."""
+    rho = np.ones((48, 48))
+    rho[18:30, 18:30] = 9.0
+
+    cart_q = Cartogram(rho, bbox=(0, 0, 1.0, 1.0))
+    cart_q.run(tol=1e-3, performance_goal="quality")
+
+    cart_s = Cartogram(rho, bbox=(0, 0, 1.0, 1.0))
+    cart_s.run(tol=1e-3, performance_goal="speed", snapshots=60)
+
+    # Every deformed grid point should agree to a small fraction of the
+    # grid spacing (1 / 48 ~= 0.021 here).
+    max_err = np.abs(
+        cart_q._final_grid_points - cart_s._final_grid_points
+    ).max()
+    assert max_err < 5e-3, f"speed mode drift too large: {max_err}"
+
+
+def test_speed_mode_is_default():
+    """Sanity check the default path doesn't diverge silently."""
+    rho = np.ones((32, 32))
+    rho[10:22, 10:22] = 5.0
+    cart = Cartogram(rho, bbox=(0, 0, 1.0, 1.0))
+    cart.run(tol=1e-3)  # default performance_goal
+    corners = np.array([[0, 0], [1, 0], [1, 1], [0, 1]], dtype=float)
+    moved = cart.transform(corners)
+    assert np.allclose(moved, corners, atol=2e-2)

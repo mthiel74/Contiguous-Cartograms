@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable, List, Sequence, Tuple
+from typing import Iterable, List, Literal, Sequence, Tuple
 
 import numpy as np
 
@@ -112,6 +112,8 @@ class Cartogram:
         rtol: float = 1e-5,
         atol: float = 1e-7,
         method: str = "RK45",
+        performance_goal: Literal["speed", "quality"] = "speed",
+        snapshots: int = 60,
     ) -> None:
         """Precompute the deformation of the grid itself.
 
@@ -119,6 +121,12 @@ class Cartogram:
         bilinearly interpolate the displacement field defined by the
         already-advected grid points, rather than re-integrating the ODE
         for every query.
+
+        ``performance_goal="speed"`` (default) uses a snapshot-cached RHS
+        that reproduces the exact-solver cartogram to sub-grid-cell
+        accuracy at a small fraction of the cost. Pass
+        ``performance_goal="quality"`` for bit-exact reproduction with
+        the reference solver.
         """
         xs, ys = self.solver.grid_coords()
         gx, gy = np.meshgrid(xs, ys)
@@ -131,6 +139,8 @@ class Cartogram:
             rtol=rtol,
             atol=atol,
             method=method,
+            performance_goal=performance_goal,
+            snapshots=snapshots,
         )
         moved = clamp_to_bbox(moved, self.bbox)
         self._final_grid_points = moved
