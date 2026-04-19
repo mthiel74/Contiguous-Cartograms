@@ -303,15 +303,270 @@ ocean cells (cells with zero input density) to the mean of the land
 cells, so the total density is uniform. The cartogram then only
 redistributes material within the land.
 
-## Wolfram-Language port
+## Wolfram-Language implementation
 
-A standalone port of the algorithm lives in [`wolfram/`](wolfram/), for
-users who prefer to stay inside Mathematica or want a `wolframscript`
-command-line entry point. It mirrors the Python package's core — same
-DCT-II spectral diffusion, same bilinear advection, same ocean
-preservation — in a few hundred lines, using only built-in Wolfram
-functionality (no external packages required). See
-[`wolfram/README.md`](wolfram/README.md) for the API and demos.
+A full from-scratch port of the algorithm lives in [`wolfram/`](wolfram/)
+as a self-contained package called `CartogramWL`. It uses only built-in
+Wolfram functionality (no external dependencies at all) and exposes
+both a one-line driver over the built-in `CountryData` database and the
+low-level algorithmic primitives, so the same code can be used from a
+casual notebook session or as a `wolframscript` batch step.
+
+![World GDP cartogram, satellite-textured, produced by WorldCartogram](wolfram/docs/images/world_gdp_satellite.png)
+*Figure: `WorldCartogram["GDP", "Background" -> "Satellite"]` — left,
+the geographic world with satellite imagery clipped to each country;
+right, the same countries with area proportional to GDP, the satellite
+imagery deformed along with the geometry. Ocean area is preserved.*
+
+### What you get
+
+* **`WorldCartogram[metric, opts]`** — a single call that reads country
+  polygons + values from `CountryData`, runs the full Gastner–Newman
+  pipeline, and returns a publication-ready `GraphicsRow` showing the
+  geographic map beside the cartogram.
+* A documented set of **algorithm primitives** (`DiffusionSolver`,
+  `AdvectPoints`, `Cartogram`, `CartogramRun`, `CartogramTransform`,
+  `CartogramTransformPolygon`, `RasterizePolygons`) for users who want
+  to build cartograms from their own data on any rectangular domain.
+* Built-in support for **satellite-textured rendering**
+  (`"Background" -> "Satellite"`), **user-supplied data as an
+  `Association`**, **multi-part countries** (Alaska + Hawaii are
+  spliced in for the US automatically), and a
+  **`PerformanceGoal -> "Speed"`** default that runs the full world
+  pipeline in under a minute with sub-pixel agreement with the exact
+  reference solution.
+* A **distortion-grid visualiser** that overlays a regular lat/lon
+  grid and warps it through the same flow field, so readers can see
+  the local stretching and compression at a glance.
+
+### Installing and loading
+
+Clone the repository and load the package directly — no paclet
+registration required:
+
+```wolfram
+Get["/path/to/Contiguous-Cartograms/wolfram/CartogramWL/CartogramWL.wl"]
+```
+
+All public symbols are now available in the `CartogramWL`` context.
+`?WorldCartogram` prints the full option list inside a notebook.
+
+### The one-liner: `WorldCartogram`
+
+Given just a metric name, `WorldCartogram` takes care of everything:
+pulling country polygons and values from `CountryData`, handling
+heavy-tailed outliers, rasterising, running the cartogram, densifying
+and warping each country polygon, and assembling a two-panel figure.
+
+```wolfram
+WorldCartogram["Population"]     (* the canonical cartogram *)
+WorldCartogram["GDP"]
+WorldCartogram["GDPPerCapita"]
+WorldCartogram["PopulationDensity"]
+```
+
+Each call returns a `GraphicsRow` with the geographic panel on the
+left and the density-equalised cartogram on the right, using
+`ColorData["SunsetColors"]` on a log-scale by default.
+
+| Metric | Output |
+|---|---|
+| `"Population"` | ![](wolfram/docs/images/world.png) |
+| `"GDP"` | ![](wolfram/docs/images/world_gdp.png) |
+| `"GDPPerCapita"` | ![](wolfram/docs/images/world_gdp_per_capita.png) |
+| `"PopulationDensity"` | ![](wolfram/docs/images/world_population_density.png) |
+
+### What the first argument can be
+
+`WorldCartogram` is flexible about where the per-country numbers come
+from:
+
+* **A recognised metric string** — `"Population"`, `"GDP"`,
+  `"GDPPerCapita"`, `"PopulationDensity"` (case-insensitive). Ships
+  with sensible defaults for the floor/ceiling clipping that tames
+  heavy-tailed outliers.
+* **Any other `CountryData` property name** — a string like
+  `"LifeExpectancy"` or `"CO2Emissions"` is looked up on the fly.
+* **A pure function** — `Function[c, …]` that returns a `Quantity`
+  or numeric value for each country entity `c`. Lets you compute
+  anything you like from `CountryData`.
+* **An `Association`** — `<|"UnitedStates" -> 332., "China" -> 1425.,
+  …|>`. Keys may be `CountryData` identifiers
+  (e.g. `"UnitedStates"`) or display names
+  (e.g. `"United States"`). Countries not present in the association
+  are skipped (or drawn in grey, see `"MissingCountries"` below).
+* **A labelled form** `{"my label", fn_or_association}` — supplies
+  both the data and the panel title.
+
+```wolfram
+(* Built-in metric *)
+WorldCartogram["Population"]
+
+(* Any CountryData property *)
+WorldCartogram["LifeExpectancy",
+   "ColorFunction" -> ColorData["ThermometerColors"]]
+
+(* Custom function *)
+WorldCartogram[{"CO2 per capita",
+   Function[c, QuantityMagnitude[CountryData[c, "CO2Emissions"]] /
+              QuantityMagnitude[CountryData[c, "Population"]]]}]
+
+(* User Association *)
+g20 = <|"UnitedStates" -> 332., "China" -> 1425., "India" -> 1428.,
+        "Japan" -> 125., "Germany" -> 83., "UnitedKingdom" -> 67.,
+        "France" -> 67.5, "Italy" -> 59., "Brazil" -> 216.,
+        "Canada" -> 39., "Russia" -> 144., "Australia" -> 26.,
+        "SouthKorea" -> 52., "Mexico" -> 128., "Indonesia" -> 278.,
+        "SouthAfrica" -> 60., "Argentina" -> 46., "Turkey" -> 85.,
+        "SaudiArabia" -> 36.|>;
+WorldCartogram[{"G20 population (millions)", g20},
+   "MissingCountries" -> "ShowGrey"]
+```
+
+![Custom Association with MissingCountries -> ShowGrey](wolfram/docs/images/world_g20_showgrey.png)
+*Figure: the same `WorldCartogram` driven by a hand-curated
+`Association` of 19 economies. Every other country is drawn in grey,
+does not contribute to the density field, but still visibly deforms
+because diffusion is global.*
+
+### Option reference
+
+All options are passed as `"Name" -> value`. Defaults are shown in
+bold.
+
+| Option | Values | Purpose |
+|---|---|---|
+| `"ColorFunction"` | any `ColorData[…]` gradient or a function `[0,1] -> RGBColor`; default **`ColorData["SunsetColors"]`** | Fills each country with `colorFn[normalisedLogValue]`. Swap for `TemperatureMap`, `ThermometerColors`, `AvocadoColors`, etc. |
+| `"Background"` | **`"Flat"`** or `"Satellite"` | `"Satellite"` textures each country with the matching patch of Wolfram's `GeoBackground -> "Satellite"` imagery. On the cartogram side the imagery is deformed along with the country geometry. |
+| `"BoundingBox"` | `{xmin, ymin, xmax, ymax}` in °; default **`{-180, -60, 180, 85}`** | The rasterisation frame. Restrict to continent-scale maps if you only care about Europe, Africa, etc. |
+| `"GridSize"` | `{ny, nx}`; default **`{192, 384}`** | Diffusion grid resolution. Higher = smoother boundaries, slower. |
+| `"MeanFloor"` | number; default **`0.02`** | Background density added as `mean*value` to avoid division-by-zero inside ocean / zero cells. |
+| `"BlurSigma"` | number; default **`1.5`** | Gaussian pre-smoothing (in grid cells) applied to the density. Prevents the polygon-rasterisation step-functions from making the initial velocity field stiff. |
+| `"Tolerance"` | number; default **`3.×10^-3`** | Convergence criterion for the slowest Fourier mode and the RK45 stepper. |
+| `"MinFloorFraction"` | number or `Automatic`; default **`Automatic`** | Clamp per-country values below `fraction × mean(values)`. Prevents Monaco on population-density or Luxembourg on GDP/capita from destabilising the advection. |
+| `"RhoCeilMultiplier"` | number or `Automatic`; default **`Automatic`** | Cap the rasterised cell density at `multiplier × mean(positive cells)` for the same reason. |
+| `"Skip"` | list of country names; default **`{"Antarctica", "FrenchSouthernTerritories", "Bouvet Island"}`** | Countries whose polygons would otherwise degenerate or crash the bbox. |
+| `"ImageSize"` | pixels; default **`900`** | Width of each panel. |
+| `"Label"` | string or `Automatic`; default **`Automatic`** | Text used in the cartogram panel's title (defaults to the metric's human-readable name). |
+| `"MaxEdge"` | number; default **`2.0`** | Maximum polygon-edge length before densification, in degrees. Long straight edges across high-gradient regions need more points. |
+| `"MissingCountries"` | **`"Hide"`** or `"ShowGrey"` | How to draw countries whose value is missing. `"Hide"` drops them from both panels. `"ShowGrey"` renders them in grey without contributing to the density field. |
+| `PerformanceGoal` | **`"Speed"`** or `"Quality"` | `"Speed"` pre-computes 60 log-spaced density/gradient snapshots and linearly interpolates during advection — ~7× faster, sub-pixel agreement with the exact solver. `"Quality"` re-evaluates the inverse DCT at every RK45 sub-step for bit-exact reproduction. |
+| `"Snapshots"` | integer; default **`60`** | Snapshot count in Speed mode. More = more accurate, little speed difference past 60. |
+
+### Colour schemes and satellite background
+
+Any `ColorData[…]` gradient works as `"ColorFunction"`:
+
+```wolfram
+WorldCartogram["PopulationDensity",
+   "ColorFunction" -> ColorData["TemperatureMap"]]
+```
+
+![Population density with TemperatureMap](wolfram/docs/images/world_population_density_temperaturemap.png)
+
+```wolfram
+WorldCartogram["GDP", "Background" -> "Satellite"]
+```
+
+— produces the image at the top of this section.
+
+### Visualising the distortion
+
+The package exposes a `CartogramDistortionGrid[cart]` helper that
+returns the warped-grid `Line` primitives ready to overlay on a
+cartogram. `wolfram/examples/distortion_grid.wls` uses it to render a
+regular 15° lat/lon grid on both panels:
+
+![Cartogram distortion grid](wolfram/docs/images/distortion_grid.png)
+
+Grid cells over high-wealth regions shrink; cells over oceans and
+sparsely populated continents stretch — the grid is a direct
+readout of the local stretching/compression factor at every point.
+
+### Multi-part countries (Alaska, Hawaii)
+
+`CountryData["UnitedStates", "Polygon"]` returns only the contiguous
+48 states — Alaska and Hawaii live under separate
+`Entity["AdministrativeDivision", …]` objects. `CartogramWL` handles
+this automatically via a helper `CountryPolygonRings[c]` that splices
+the administrative-division polygons back in before rasterisation.
+The same hook can be used for France's overseas departments,
+Portugal's Azores/Madeira, Denmark's Greenland, and so on.
+
+![Before/after: Alaska and Hawaii in the US polygon set](wolfram/docs/images/alaska_before_after.png)
+*Figure: GDP cartogram of North America, US highlighted in orange.
+Top row = geographic inputs, bottom row = resulting cartogram. Left
+uses bare `CountryData` (mainland only), right uses
+`CountryPolygonRings` (mainland + Alaska + Hawaii). With the fix,
+Alaska and Hawaii both grow alongside the mainland on the cartogram.*
+
+### Algorithm primitives
+
+For use on your own density grids / polygons / domains:
+
+```wolfram
+(* 1. Build a diffusion solver from a density grid. *)
+solver = DiffusionSolver[rho, {xmin, ymin, xmax, ymax}];
+rhoAtT = DensityAt[solver, t];
+
+(* 2. Flow any set of points through the resulting velocity field. *)
+newPts = AdvectPoints[solver, {{x1, y1}, {x2, y2}, ...}];
+
+(* 3. High-level driver with pre-smoothing, floor, ocean preservation. *)
+cart = Cartogram[rho, bbox,
+   "MeanFloor"   -> 0.02,
+   "BlurSigma"   -> 1.5,
+   "SeaDensity"  -> "auto"];        (* "auto" = preserve ocean area *)
+cart = CartogramRun[cart, PerformanceGoal -> "Speed"];
+
+(* 4. Map arbitrary points / polygons through the deformation. *)
+newPts  = CartogramTransform[cart, pts];
+newPoly = CartogramTransformPolygon[cart, polyCoords];
+
+(* 5. Rasterise your own polygon+value pairs to a density grid. *)
+rho = RasterizePolygons[polyList, values, bbox, {ny, nx}, subpixel];
+```
+
+Density arrays use the NumPy convention: `rho[[i, j]]` with row index
+`i ↦ y`, column `j ↦ x`; `bbox = {xmin, ymin, xmax, ymax}`.
+
+### Running from the command line
+
+Three ready-to-run `wolframscript` entry points live under
+[`wolfram/examples/`](wolfram/examples/):
+
+```bash
+cd wolfram
+
+# Sanity tests (a few seconds):
+wolframscript -file tests/test_basic.wls
+
+# Synthetic 4×4 demo (~5 s):
+wolframscript -file examples/synthetic.wls
+
+# World demo (~1 min on a laptop, no downloads):
+wolframscript -file examples/world.wls
+
+# Parameterised driver: <metric> [<colorScheme>] [<bg>]
+wolframscript -file examples/world_metric.wls gdp
+wolframscript -file examples/world_metric.wls population_density TemperatureMap
+wolframscript -file examples/world_metric.wls gdp SunsetColors satellite
+```
+
+### Further reading
+
+* [`wolfram/README.md`](wolfram/README.md) — full Wolfram-side
+  documentation: API cheat sheet, algorithm notes, conventions, and a
+  mapping between the Wolfram and Python entry points.
+* [`wolfram/community/cartograms.nb`](wolfram/community/cartograms.nb)
+  / [`wolfram/community/cartograms.pdf`](wolfram/community/cartograms.pdf)
+  — a notebook / PDF walkthrough of the method written for the
+  Wolfram Community, with runnable code cells and native math
+  typesetting.
+* [`wolfram/experimental/README.md`](wolfram/experimental/README.md) —
+  benchmarks, profiling notes, and a record of which optimisations
+  paid off and which did not (the snapshot-cached advection now in
+  main was born here).
 
 ## Repository layout
 
