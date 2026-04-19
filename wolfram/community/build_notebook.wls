@@ -671,7 +671,64 @@ matching ",
 implementation so the two are drop-in interchangeable for \
 debugging / cross-validation."}], "Text"],
 
- Cell["9. References", "Section"],
+ Cell["9. Related work in the Wolfram ecosystem", "Section"],
+
+ Cell[TextData[{"This is not the first Wolfram-Language treatment of \
+cartograms. Two earlier resources are worth reading alongside this \
+one:"}], "Text"],
+
+ Cell[TextData[{
+   "\[Bullet] The 2019 Wolfram Community post ",
+   ButtonBox["Creating a contiguous cartogram for the US",
+     BaseStyle -> "Hyperlink",
+     ButtonData -> {URL["https://community.wolfram.com/groups/-/m/t/\
+1729609"], None}],
+   " by George Varnavides presents a ",
+   StyleBox["Manipulate", "Input"],
+   "-driven US-state cartogram with an interactive colour legend, \
+originally written for the 2019 Wolfram Summer School. It focuses \
+on a single country, uses an iterative scaling update rather than \
+diffusion, and is a nice demonstration of how much can be done \
+inside a notebook with no package at all."}],
+      "Text"],
+
+ Cell[TextData[{
+   "\[Bullet] ",
+   StyleBox["ResourceFunction[\"Cartogram\"]", "Input"],
+   " \[LongDash] ",
+   ButtonBox["resources.wolframcloud.com/FunctionRepository/\
+resources/Cartogram",
+     BaseStyle -> "Hyperlink",
+     ButtonData -> {URL["https://resources.wolframcloud.com/\
+FunctionRepository/resources/Cartogram"], None}],
+   " \[LongDash] is a function-repository entry that produces a \
+contiguous cartogram directly from an ",
+   StyleBox["EntityClass", "Input"],
+   " plus a property. It is a single-call convenience similar in \
+spirit to ",
+   StyleBox["WorldCartogram", "Input"],
+   ", runs inside the Wolfram Cloud with no installation, and is \
+the right tool when you need a quick cartogram without thinking \
+about parameters."}],
+      "Text"],
+
+ Cell[TextData[{"Relative to those two, the contribution of the \
+present package is (a) a pure-Wolfram port of the full \
+Gastner\[Dash]Newman diffusion algorithm exposed as a handful of \
+composable primitives (",
+   StyleBox["DiffusionSolver", "Input"], ", ",
+   StyleBox["AdvectPoints", "Input"], ", ",
+   StyleBox["RasterizePolygons", "Input"],
+   ", \[Ellipsis]) that can be used on any rectangular domain, not \
+just a country set; (b) built-in support for ocean-area \
+preservation, user-supplied ",
+   StyleBox["Association", "Input"],
+   " input, and satellite-textured rendering; and (c) a default ",
+   StyleBox["PerformanceGoal -> \"Speed\"", "Input"],
+   " mode that cuts a full world cartogram from ~5 minutes to under \
+a minute while staying sub-pixel-accurate."}], "Text"],
+
+ Cell["10. References", "Section"],
 
  Cell[TextData[{
    "\[Bullet] M. T. Gastner & M. E. J. Newman, \"Diffusion-based \
