@@ -546,6 +546,44 @@ populations are diluted across a great deal of territory."}],
 
  imgCell["world_population_density.png"],
 
+ Cell["4.5 A detour: multi-part countries (Alaska, Hawaii)",
+      "Subsection"],
+
+ Cell[TextData[{"Wolfram's ",
+   StyleBox["CountryData[\"UnitedStates\", \"Polygon\"]", "Input"],
+   " only returns the contiguous 48 states. Alaska and Hawaii live \
+under ",
+   StyleBox["Entity[\"AdministrativeDivision\", {\"Alaska\", \
+\"UnitedStates\"}]", "Input"],
+   " and its Hawaii analogue. If we rasterised the bare ",
+   StyleBox["CountryData", "Input"],
+   " polygon the US would grow on the cartogram \[LongDash] but only \
+the lower 48 would grow, because Alaska and Hawaii would contribute \
+zero density to the diffusion field. ",
+   StyleBox["CartogramWL", "Input"],
+   " therefore splices the administrative-division polygons back in \
+via a helper ",
+   StyleBox["CountryPolygonRings[c]", "Input"],
+   " before rasterising. Below is the full US ring set that actually \
+feeds the algorithm \[LongDash] 28 mainland rings plus 77 Alaska \
+rings (one ring per Aleutian island) plus 8 Hawaiian rings, 113 \
+rings in total, all drawn in the same colour because they share a \
+single country value. The same hook can be used to splice in \
+France's overseas departments, Portugal's Azores/Madeira, Denmark's \
+Greenland, and so on."}], "Text"],
+
+ Cell[BoxData[
+"Length @ CountryPolygonRings[\"UnitedStates\"]\n\
+(* 113  -- 28 mainland + 77 Alaska + 8 Hawaii *)"], "Input"],
+
+ imgCell["united_states_polygon.png",
+  "Figure 2. The polygon set that actually feeds the cartogram for \
+the United States. Mainland (28 rings, right), Alaska mainland + \
+Aleutians (77 rings, left), and Hawaii (8 islands, bottom-left). \
+Every ring of the same country shares the country's per-area \
+density, so Alaska and Hawaii grow alongside the mainland on the \
+GDP or population cartogram."],
+
  (* ---- Section 5: Colour & satellite ---- *)
 
  Cell["5. Colour schemes & satellite background", "Section"],
