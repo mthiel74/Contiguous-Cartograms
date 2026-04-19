@@ -43,6 +43,58 @@ RasterizePolygons::usage = "RasterizePolygons[polys, values, bbox, \
 {ny, nx}, subpixel] rasters an association-less list of polygons + \
 per-polygon values to a density grid.";
 
+CartogramDistortionGrid::usage = "CartogramDistortionGrid[cart, opts] \
+returns a list of Line primitives describing a regular rectangular \
+grid on the cartogram's bounding box, transformed through the \
+cartogram deformation. Useful for visualising how the cartogram \
+distorts space. Options: \"Lines\" (number of horizontals, default 13), \
+\"Columns\" (number of verticals, default 25), \"MaxEdge\" (segment \
+densification, default = one grid cell).";
+
+WorldCartogram::usage = "WorldCartogram[metric, opts] builds a \
+side-by-side Gastner-Newman cartogram of the world, reading country \
+polygons and metric values from Wolfram's built-in CountryData.\n\n\
+metric may be:\n\
+  - one of the built-in names \"Population\", \"GDP\", \
+\"GDPPerCapita\", \"PopulationDensity\" (case-insensitive),\n\
+  - any other CountryData property name (a string), \n\
+  - a Function[c, ...] returning a Quantity or number for each \
+country c,\n\
+  - an Association <| country -> value, ... |> where keys are \
+CountryData identifiers (e.g. \"UnitedStates\") or display names \
+(e.g. \"United States\"); missing keys are skipped, or\n\
+  - a pair {label_String, <Function|Association>} to supply a display \
+label alongside the custom metric.\n\n\
+Options:\n\
+  \"ColorFunction\"      -> a function taking x in [0,1] to a colour \
+(default ColorData[\"SunsetColors\"]);\n\
+  \"Background\"         -> \"Flat\" (default) or \"Satellite\". \
+\"Satellite\" textures each country with the corresponding patch of \
+GeoBackground -> \"Satellite\" imagery.\n\
+  \"BoundingBox\"        -> {xmin, ymin, xmax, ymax} in \
+(longitude, latitude) (default {-180, -60, 180, 85});\n\
+  \"GridSize\"           -> {ny, nx} rasterisation grid (default \
+{192, 384});\n\
+  \"MeanFloor\"          -> background floor for diffusion stability \
+(default 0.02);\n\
+  \"BlurSigma\"          -> Gaussian pre-smoothing in cells (default \
+1.5);\n\
+  \"Tolerance\"          -> integration tolerance (default 3.*^-3);\n\
+  \"MinFloorFraction\"   -> clamp per-country values below \
+frac*mean(values);\n\
+  \"RhoCeilMultiplier\"  -> post-rasterisation clip of rho at \
+mult*mean(positiveCells);\n\
+  \"Skip\"               -> list of country names to exclude \
+(default skips Antarctica);\n\
+  \"ImageSize\"          -> pixel width of each panel (default 900);\n\
+  \"Label\"              -> text used in the panel title (Automatic = \
+derived from the metric);\n\
+  \"MissingCountries\"   -> \"Hide\" (default — drop countries with no \
+value) or \"ShowGrey\" (render them in grey, no density contribution).\n\n\
+Returns a GraphicsRow containing the geographic panel on the left and \
+the density-equalised cartogram on the right. Use Export or Rasterize \
+to save the result.";
+
 Begin["`Private`"];
 
 (* =====================================================================
@@ -346,6 +398,312 @@ CartogramTransformPolygon[cart_Association, poly_List,
   ];
   CartogramTransform[cart, densified]
 ];
+
+(* =====================================================================
+   CartogramDistortionGrid — regular lat/lon grid transformed through
+   the cartogram. Returns {Line[...], Line[...], ...} primitives that
+   the caller wraps in Graphics.
+===================================================================== *)
+
+Options[CartogramDistortionGrid] = {
+  "Lines"   -> 13,
+  "Columns" -> 25,
+  "MaxEdge" -> Automatic
+};
+
+densifyLine[pts_, maxE_] := Module[{out, a, b, d, k},
+  out = {pts[[1]]};
+  Do[
+    a = pts[[i]]; b = pts[[i + 1]];
+    d = Norm[b - a];
+    k = Max[1, Ceiling[d/maxE]];
+    Do[AppendTo[out, a + (b - a) (s/k)], {s, 1, k}],
+    {i, 1, Length[pts] - 1}];
+  out];
+
+CartogramDistortionGrid[cart_Association,
+                        OptionsPattern[]] := Module[
+  {solver, xmin, ymin, xmax, ymax, nlines, ncols, maxE, dx, dy,
+   xs, ys, horizLines, vertLines, transformed},
+  solver = cart["solver"];
+  {xmin, ymin, xmax, ymax} = solver["bbox"];
+  nlines = OptionValue["Lines"];
+  ncols  = OptionValue["Columns"];
+  maxE   = OptionValue["MaxEdge"];
+  If[maxE === Automatic, maxE = Min[solver["dx"], solver["dy"]]];
+  xs = Table[xmin + j (xmax - xmin)/(ncols - 1), {j, 0, ncols - 1}];
+  ys = Table[ymin + i (ymax - ymin)/(nlines - 1), {i, 0, nlines - 1}];
+  horizLines = Table[Table[{x, y}, {x, xs}], {y, ys}];
+  vertLines  = Table[Table[{x, y}, {y, ys}], {x, xs}];
+  transformed = Join[
+    Map[CartogramTransform[cart, densifyLine[#, maxE]] &, horizLines],
+    Map[CartogramTransform[cart, densifyLine[#, maxE]] &, vertLines]];
+  Line /@ transformed];
+
+(* =====================================================================
+   WorldCartogram — convenience wrapper that pulls country polygons and
+   metric values from CountryData, rasterises, runs the cartogram, and
+   returns a GraphicsRow with both panels. The heavy lifting is handled
+   by the primitives above.
+===================================================================== *)
+
+Options[WorldCartogram] = {
+  "ColorFunction"     -> Automatic,
+  "Background"        -> "Flat",
+  "BoundingBox"       -> {-180., -60., 180., 85.},
+  "GridSize"          -> {192, 384},
+  "MeanFloor"         -> 0.02,
+  "BlurSigma"         -> 1.5,
+  "Tolerance"         -> 3.*^-3,
+  "MinFloorFraction"  -> Automatic,
+  "RhoCeilMultiplier" -> Automatic,
+  "Skip"              -> {"Antarctica",
+                          "FrenchSouthernTerritories",
+                          "Bouvet Island"},
+  "ImageSize"         -> 900,
+  "Label"             -> Automatic,
+  "MaxEdge"           -> 2.0,
+  "MissingCountries"  -> "Hide"  (* "Hide" | "ShowGrey" *)
+};
+
+(* Map a metric argument to {label, fn, defFloorFrac, defCeilMult}. *)
+worldMetricSpec[m_String] := Module[{lc = ToLowerCase[m]},
+  Switch[lc,
+    "population",
+      {"population",
+       Function[c, CountryData[c, "Population"]], 0.01, 200.},
+    "gdp",
+      {"GDP (USD/year)",
+       Function[c, CountryData[c, "GDP"]], 0.01, 200.},
+    "gdppercapita" | "gdp_per_capita",
+      {"GDP per capita (USD/person/year)",
+       Function[c, CountryData[c, "GDPPerCapita"]], 0.10, 40.},
+    "populationdensity" | "population_density",
+      {"population density (people/km^2)",
+       Function[c, With[{p = CountryData[c, "Population"],
+                         a = CountryData[c, "Area"]},
+         If[Head[p] === Quantity && Head[a] === Quantity &&
+            QuantityMagnitude[a] > 0,
+            p/a, Missing["NotAvailable"]]]],
+       0.05, 30.},
+    _,
+      {m, Function[c, CountryData[c, m]], 0.01, 200.}]];
+
+worldMetricSpec[f_Function] :=
+  {"custom metric", f, 0.01, 200.};
+
+worldMetricSpec[{label_String, f_Function}] :=
+  {label, f, 0.01, 200.};
+
+worldMetricSpec[{label_String, f_Function, floorFrac_?NumericQ,
+                  ceilMult_?NumericQ}] :=
+  {label, f, N@floorFrac, N@ceilMult};
+
+(* Association of country -> value. Looked up by either the
+   CountryData identifier (e.g. "UnitedStates") or the common name
+   (CountryData[c, "Name"], e.g. "United States"). Missing keys
+   resolve to Missing["NotAvailable"] and the country is skipped. *)
+worldAssocLookup[a_Association, c_] := Module[{v},
+  v = Lookup[a, c, Missing["NotAvailable"]];
+  If[MissingQ[v],
+     v = Lookup[a, CountryData[c, "Name"], Missing["NotAvailable"]]];
+  v];
+
+worldMetricSpec[a_Association] :=
+  {"custom metric",
+   Function[c, worldAssocLookup[a, c]], 0.01, 200.};
+
+worldMetricSpec[{label_String, a_Association}] :=
+  {label, Function[c, worldAssocLookup[a, c]], 0.01, 200.};
+
+worldMetricSpec[{label_String, a_Association, floorFrac_?NumericQ,
+                  ceilMult_?NumericQ}] :=
+  {label, Function[c, worldAssocLookup[a, c]],
+   N@floorFrac, N@ceilMult};
+
+worldToRings[poly_Polygon] := Module[{inner, rings},
+  inner = poly[[1]]; rings = First[inner];
+  Map[{#[[2]], #[[1]]} &, rings, {2}]];
+
+WorldCartogram[metric_, opts : OptionsPattern[]] := Module[
+  {label, metricFn, floorFrac, ceilMult, bbox, gridSize, bg, imgSize,
+   skip, maxEdge, colorFn, labelOpt, countries, entries, greyEntries,
+   greyNewEntries, values, positive, meanVal, floor, polyRaster, vals,
+   rho, posMean, ceiling, cart, transformRing, newEntries, minP, maxP,
+   logMin, logMax, normalise, uvRing, satTexture, xmin, ymin, xmax,
+   ymax, flatPanel, satPanel, panelTitle, cfOpt, missingMode, valBuf,
+   greyBuf, cName, cVal, cPoly},
+  {label, metricFn, floorFrac, ceilMult} = worldMetricSpec[metric];
+  If[OptionValue["MinFloorFraction"] =!= Automatic,
+     floorFrac = N@OptionValue["MinFloorFraction"]];
+  If[OptionValue["RhoCeilMultiplier"] =!= Automatic,
+     ceilMult  = N@OptionValue["RhoCeilMultiplier"]];
+  labelOpt = OptionValue["Label"];
+  If[labelOpt =!= Automatic, label = labelOpt];
+  bbox = N@OptionValue["BoundingBox"];
+  {xmin, ymin, xmax, ymax} = bbox;
+  gridSize = OptionValue["GridSize"];
+  bg       = ToLowerCase[ToString[OptionValue["Background"]]];
+  imgSize  = OptionValue["ImageSize"];
+  skip     = OptionValue["Skip"];
+  maxEdge  = OptionValue["MaxEdge"];
+  cfOpt    = OptionValue["ColorFunction"];
+  colorFn  = If[cfOpt === Automatic, ColorData["SunsetColors"], cfOpt];
+  missingMode = OptionValue["MissingCountries"];
+  If[! MemberQ[{"Hide", "ShowGrey"}, missingMode],
+     Message[WorldCartogram::missmode, missingMode]; Return[$Failed]];
+
+  countries = Select[CountryData["Countries"],
+    ! MemberQ[skip, CountryData[#, "Name"]] &];
+
+  (* Partition countries into {value + polygon OK} and
+     {polygon OK, value missing}. Countries with no polygon are
+     skipped regardless. *)
+  valBuf  = {};
+  greyBuf = {};
+  Do[
+    cPoly = CountryData[c, "Polygon"];
+    If[Head[cPoly] === Polygon,
+      cVal  = metricFn[c];
+      cName = CountryData[c, "Name"];
+      If[(Head[cVal] === Quantity || NumericQ[cVal]),
+        AppendTo[valBuf, <|
+          "name"  -> cName,
+          "value" -> N@If[Head[cVal] === Quantity,
+                          QuantityMagnitude[cVal], cVal],
+          "rings" -> worldToRings[cPoly]|>],
+        If[missingMode === "ShowGrey",
+          AppendTo[greyBuf, <|
+            "name"  -> cName,
+            "rings" -> worldToRings[cPoly]|>]]]],
+    {c, countries}];
+  entries     = valBuf;
+  greyEntries = greyBuf;
+  If[entries === {},
+     Message[WorldCartogram::nodata, metric]; Return[$Failed]];
+
+  values   = entries[[All, "value"]];
+  positive = Select[values, # > 0 &];
+  meanVal  = Mean[positive];
+  floor    = floorFrac * meanVal;
+  entries  = Map[Append[#, "value" -> Max[#["value"], floor]] &,
+                  entries];
+
+  polyRaster = entries[[All, "rings", 1]];
+  vals       = entries[[All, "value"]];
+  rho        = RasterizePolygons[polyRaster, vals, bbox, gridSize, 2];
+  posMean    = Mean[Select[Flatten[rho], # > 0 &]];
+  ceiling    = ceilMult * posMean;
+  rho        = Map[Min[#, ceiling] &, rho, {2}];
+
+  cart = Cartogram[rho, bbox,
+    "MeanFloor"  -> OptionValue["MeanFloor"],
+    "BlurSigma"  -> OptionValue["BlurSigma"],
+    "SeaDensity" -> "auto"];
+  cart = CartogramRun[cart, "Tol" -> OptionValue["Tolerance"]];
+
+  transformRing[ring_] :=
+    CartogramTransformPolygon[cart, ring, "MaxEdge" -> maxEdge];
+  newEntries = Map[
+    Append[#, "rings" -> Map[transformRing, #["rings"]]] &, entries];
+  greyNewEntries = If[Length[greyEntries] > 0,
+    Map[Append[#, "rings" -> Map[transformRing, #["rings"]]] &,
+        greyEntries],
+    {}];
+
+  minP = Min[vals]; maxP = Max[vals];
+  logMin = Log10[1. + minP]; logMax = Log10[1. + maxP];
+  normalise[v_] := (Log10[1. + v] - logMin)/(logMax - logMin + 1.*^-12);
+
+  uvRing[ring_] := Map[{(#[[1]] - xmin)/(xmax - xmin),
+                        (#[[2]] - ymin)/(ymax - ymin)} &, ring];
+
+  satTexture = If[bg === "satellite",
+    Rasterize[
+      GeoGraphics[
+        GeoRange -> {{ymin, ymax}, {xmin, xmax}},
+        GeoBackground -> "Satellite",
+        GeoRangePadding -> None,
+        ImageSize -> {2048, 1024},
+        Frame -> False, PlotRangePadding -> 0],
+      "Image", RasterSize -> 2048],
+    None];
+
+  flatPanel[posEntries_, greyPos_, title_] := Graphics[
+    {
+      (* grey layer for missing-data countries (drawn underneath) *)
+      If[Length[greyPos] > 0,
+        {EdgeForm[Directive[GrayLevel[0.4], Thickness[0.0003]]],
+         FaceForm[GrayLevel[0.82]],
+         Table[Polygon /@ greyPos[[k]]["rings"],
+               {k, 1, Length[greyPos]}]},
+        {}],
+      (* data-bearing countries on top *)
+      Table[
+        Module[{e = posEntries[[k]]},
+          {EdgeForm[Directive[Black, Thickness[0.0004]]],
+           FaceForm[colorFn[normalise[e["value"]]]],
+           Polygon /@ e["rings"]}],
+        {k, 1, Length[posEntries]}]
+    },
+    Frame -> True, FrameTicks -> None,
+    PlotLabel -> title, AspectRatio -> Automatic,
+    ImageSize -> imgSize];
+
+  satPanel[posEntries_, origEntries_, greyPos_, greyOrig_, title_] :=
+    Graphics[
+    {Texture[satTexture],
+     (* missing-data countries: textured normally but with a faint
+        grey veil so they read as "no data" rather than as zero. *)
+     If[Length[greyPos] > 0,
+       Table[
+         Module[{pRings = greyPos[[k]]["rings"],
+                 oRings = greyOrig[[k]]["rings"]},
+           {EdgeForm[Directive[White, Opacity[0.4],
+                               Thickness[0.0004]]],
+            FaceForm[Directive[GrayLevel[0.6], Opacity[0.55]]],
+            MapThread[
+              Polygon[#1, VertexTextureCoordinates -> uvRing[#2]] &,
+              {pRings, oRings}]}],
+         {k, 1, Length[greyPos]}],
+       {}],
+     Table[
+       Module[{pRings = posEntries[[k]]["rings"],
+               oRings = origEntries[[k]]["rings"]},
+         {EdgeForm[Directive[White, Opacity[0.6], Thickness[0.0005]]],
+          FaceForm[White],
+          MapThread[
+            Polygon[#1, VertexTextureCoordinates -> uvRing[#2]] &,
+            {pRings, oRings}]}],
+       {k, 1, Length[posEntries]}]},
+    Frame -> True, FrameTicks -> None,
+    PlotLabel -> title, AspectRatio -> Automatic,
+    ImageSize -> imgSize, Background -> Black];
+
+  panelTitle = "Cartogram (area \[Proportional] " <> label <>
+               ", oceans preserved)";
+  If[bg === "satellite",
+    GraphicsRow[{
+      satPanel[entries, entries, greyEntries, greyEntries,
+               "Geographic (lon/lat)"],
+      satPanel[newEntries, entries, greyNewEntries, greyEntries,
+               panelTitle]},
+      ImageSize -> 2 imgSize, Spacings -> 30,
+      PlotLabel -> Style[
+        "World cartogram \[LongDash] " <> label,
+        FontSize -> 14, Bold]],
+    GraphicsRow[{
+      flatPanel[entries, greyEntries, "Geographic (lon/lat)"],
+      flatPanel[newEntries, greyNewEntries, panelTitle]},
+      ImageSize -> 2 imgSize, Spacings -> 30,
+      PlotLabel -> Style[
+        "World cartogram \[LongDash] " <> label,
+        FontSize -> 14, Bold]]]
+];
+WorldCartogram::nodata = "No countries produced a valid value for \
+metric `1`.";
+WorldCartogram::missmode = "MissingCountries option must be \"Hide\" \
+or \"ShowGrey\"; got `1`.";
 
 End[];
 EndPackage[];
