@@ -403,7 +403,12 @@ FastWorldCartogram[metric_, opts : OptionsPattern[]] := Module[
 
   polyRaster = entries[[All, "rings", 1]];
   vals       = entries[[All, "value"]];
-  rho        = FastRasterizePolygons[polyRaster, vals, bbox, gridSize];
+  (* Use the baseline rasteriser: the Rasterize-based fast variant
+     disagrees with it on partially-covered edge cells by enough to
+     deform the whole cartogram.  Rasterisation is 3% of wall-clock
+     anyway, so there's no pressure to replace it. *)
+  rho        = CartogramWL`RasterizePolygons[polyRaster, vals, bbox,
+                 gridSize, 2];
   posMean    = Mean[Select[Flatten[rho], # > 0 &]];
   ceiling    = ceilMult * posMean;
   rho        = Map[Min[#, ceiling] &, rho, {2}];
