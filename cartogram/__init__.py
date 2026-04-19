@@ -20,6 +20,8 @@ __all__ = [
     "rasterize_polygons",
     "WorldMap",
     "warp_image",
+    "world_cartogram",
+    "WorldCartogramResult",
 ]
 
 
@@ -32,6 +34,12 @@ def __getattr__(name: str):
     if name == "warp_image":
         from .warp import warp_image
         return warp_image
+    if name == "world_cartogram":
+        from .one_liner import world_cartogram
+        return world_cartogram
+    if name == "WorldCartogramResult":
+        from .one_liner import WorldCartogramResult
+        return WorldCartogramResult
     raise AttributeError(f"module 'cartogram' has no attribute {name!r}")
 
 __version__ = "0.1.0"
