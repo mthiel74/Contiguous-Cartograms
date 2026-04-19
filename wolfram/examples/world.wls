@@ -28,13 +28,13 @@ countries = Select[CountryData["Countries"],
 
 Print["pulling ", Length[countries], " countries..."];
 entries = Reap[Do[
-  With[{name = CountryData[c, "Name"],
-        pop  = CountryData[c, "Population"],
-        poly = CountryData[c, "Polygon"]},
-    If[Head[pop] === Quantity && Head[poly] === Polygon,
-      Sow[<|"name" -> name,
-            "pop"  -> N@QuantityMagnitude[pop],
-            "rings" -> toRings[poly]|>]
+  With[{name  = CountryData[c, "Name"],
+        pop   = CountryData[c, "Population"],
+        rings = CartogramWL`CountryPolygonRings[c]},
+    If[Head[pop] === Quantity && rings =!= {},
+      Sow[<|"name"  -> name,
+            "pop"   -> N@QuantityMagnitude[pop],
+            "rings" -> rings|>]
     ]
   ],
   {c, countries}]][[2, 1]];

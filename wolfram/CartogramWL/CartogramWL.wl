@@ -51,6 +51,14 @@ distorts space. Options: \"Lines\" (number of horizontals, default 13), \
 \"Columns\" (number of verticals, default 25), \"MaxEdge\" (segment \
 densification, default = one grid cell).";
 
+CountryPolygonRings::usage = "CountryPolygonRings[country] returns \
+the list of exterior rings (each a list of {lon, lat} pairs) for a \
+CountryData entity, MERGING in additional administrative-division \
+polygons for multi-part countries whose CountryData[..., \"Polygon\"] \
+only contains their contiguous mainland. Currently handles the \
+United States (merges in Alaska + Hawaii) and can be extended for \
+other countries. Returns {} if the country has no polygon.";
+
 WorldCartogram::usage = "WorldCartogram[metric, opts] builds a \
 side-by-side Gastner-Newman cartogram of the world, reading country \
 polygons and metric values from Wolfram's built-in CountryData.\n\n\
@@ -630,6 +638,36 @@ worldToRings[poly_Polygon] := Module[{inner, rings},
   inner = poly[[1]]; rings = First[inner];
   Map[{#[[2]], #[[1]]} &, rings, {2}]];
 
+(* For multi-part countries, CountryData["<country>", "Polygon"] only
+   returns the contiguous mainland: the US entry is missing Alaska
+   and Hawaii, for instance. We therefore merge in extra rings from
+   administrative-division entities. We also filter out rings that
+   lie wholly in the opposite longitude hemisphere from the mainland
+   (tiny far-Aleutian islands like Attu that would otherwise appear
+   at lon > +170 and stretch the world frame). *)
+
+adminRings[state_, country_] := Module[{poly, rings, mainHemisphere},
+  poly = Quiet @ Check[
+    Entity["AdministrativeDivision", {state, country}]["Polygon"],
+    $Failed];
+  If[Head[poly] =!= Polygon, Return[{}]];
+  rings = worldToRings[poly];
+  (* Keep rings whose longitudes sit mostly in the western hemisphere
+     (Alaska, Hawaii are both at lon < 0). *)
+  Select[rings, Max[#[[All, 1]]] < 0 &]];
+
+extraCountryRings[c_] := Switch[c,
+  "UnitedStates",
+    Join[
+      adminRings["Alaska",  "UnitedStates"],
+      adminRings["Hawaii",  "UnitedStates"]],
+  _, {}];
+
+CountryPolygonRings[c_] := Module[{poly, main},
+  poly = CountryData[c, "Polygon"];
+  main = If[Head[poly] === Polygon, worldToRings[poly], {}];
+  Join[main, extraCountryRings[c]]];
+
 WorldCartogram[metric_, opts : OptionsPattern[]] := Module[
   {label, metricFn, floorFrac, ceilMult, bbox, gridSize, bg, imgSize,
    skip, maxEdge, colorFn, labelOpt, countries, entries, greyEntries,
@@ -667,20 +705,20 @@ WorldCartogram[metric_, opts : OptionsPattern[]] := Module[
   valBuf  = {};
   greyBuf = {};
   Do[
-    cPoly = CountryData[c, "Polygon"];
-    If[Head[cPoly] === Polygon,
-      cVal  = metricFn[c];
-      cName = CountryData[c, "Name"];
-      If[(Head[cVal] === Quantity || NumericQ[cVal]),
-        AppendTo[valBuf, <|
-          "name"  -> cName,
-          "value" -> N@If[Head[cVal] === Quantity,
-                          QuantityMagnitude[cVal], cVal],
-          "rings" -> worldToRings[cPoly]|>],
-        If[missingMode === "ShowGrey",
-          AppendTo[greyBuf, <|
+    With[{rings = CountryPolygonRings[c]},
+      If[rings =!= {},
+        cVal  = metricFn[c];
+        cName = CountryData[c, "Name"];
+        If[(Head[cVal] === Quantity || NumericQ[cVal]),
+          AppendTo[valBuf, <|
             "name"  -> cName,
-            "rings" -> worldToRings[cPoly]|>]]]],
+            "value" -> N@If[Head[cVal] === Quantity,
+                            QuantityMagnitude[cVal], cVal],
+            "rings" -> rings|>],
+          If[missingMode === "ShowGrey",
+            AppendTo[greyBuf, <|
+              "name"  -> cName,
+              "rings" -> rings|>]]]]],
     {c, countries}];
   entries     = valBuf;
   greyEntries = greyBuf;

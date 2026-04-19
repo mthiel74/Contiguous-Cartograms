@@ -25,12 +25,12 @@ countries = Select[CountryData["Countries"],
   ! MemberQ[skip, CountryData[#, "Name"]] &];
 
 entries = Reap[Do[
-  With[{val  = CountryData[c, "GDP"],
-        poly = CountryData[c, "Polygon"]},
-    If[Head[val] === Quantity && Head[poly] === Polygon,
+  With[{val   = CountryData[c, "GDP"],
+        rings = CartogramWL`CountryPolygonRings[c]},
+    If[Head[val] === Quantity && rings =!= {},
       Sow[<|"name"  -> CountryData[c, "Name"],
             "value" -> N@QuantityMagnitude[val],
-            "rings" -> toRings[poly]|>]]],
+            "rings" -> rings|>]]],
   {c, countries}]][[2, 1]];
 Print["  kept ", Length[entries], " countries"];
 

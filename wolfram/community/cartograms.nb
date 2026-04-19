@@ -10,20 +10,20 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       154,          7]
-NotebookDataLength[   9864636,     162129]
-NotebookOptionsPosition[   9855773,     162029]
-NotebookOutlinePosition[   9856184,     162046]
-CellTagsIndexPosition[   9856141,     162043]
+NotebookDataLength[   9864601,     162128]
+NotebookOptionsPosition[   9855738,     162028]
+NotebookOutlinePosition[   9856149,     162045]
+CellTagsIndexPosition[   9856106,     162042]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
-Cell["Diffusion Cartograms in the Wolfram Language", "Title",ExpressionUUID->"e71e176d-580e-4c2d-97f0-5ab6fc05c500"],
+Cell["Diffusion Cartograms in the Wolfram Language", "Title",ExpressionUUID->"1076d06a-3901-4f4f-a9ea-8a41e7ad9ade"],
 
 Cell["\<\
 A self-contained pure-Wolfram implementation of the Gastner\[Dash]Newman \
 density-equalising map algorithm.\
-\>", "Subtitle",ExpressionUUID->"756e42e8-a414-4393-9ac5-9d820b8ee206"],
+\>", "Subtitle",ExpressionUUID->"64ceda37-7629-41a0-8090-0520414bc0e0"],
 
 Cell[TextData[{
  "Marco Thiel, April 2026 \[LongDash] ",
@@ -33,9 +33,9 @@ Cell[TextData[{
     URL["https://github.com/mthiel74/Contiguous-Cartograms"], None}]
 }], "Text",
  TextAlignment->Center,
- FontSlant->Italic,ExpressionUUID->"3bf430ba-a172-4473-84d6-ce93c2844ab1"],
+ FontSlant->Italic,ExpressionUUID->"d9e815d5-e25b-4f7b-9266-8df6601fc0f2"],
 
-Cell["Abstract", "Section",ExpressionUUID->"316d0cb8-ce47-4799-a5ce-fc14585bdf16"],
+Cell["Abstract", "Section",ExpressionUUID->"1b6b2d43-fddf-4117-a84d-9c7995c44a80"],
 
 Cell[TextData[{
  "Cartograms are maps in which the area of each region is deformed to be \
@@ -55,7 +55,7 @@ field ",
       RowBox[{"\[Del]", "\[Rho]"}], "\[Rho]"]}]}], TraditionalForm]], 
   "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "7bef8d4b-6c1c-486b-80cb-16152b88bc31"],
+  "9cd18de7-28f7-44a9-831c-5fcb0d4b3964"],
  ". This notebook presents a compact, pure-Wolfram-Language port of that \
 algorithm. It ships as a paclet-style package ",
  StyleBox["CartogramWL", "Input"],
@@ -80,7 +80,7 @@ user-supplied ",
 grid, and a ",
  StyleBox["PerformanceGoal -> \"Speed\"", "Input"],
  " default that runs the full world pipeline in under a minute."
-}], "Text",ExpressionUUID->"557c33a4-1dc4-4c7b-9c7e-0c0b5cb64f12"],
+}], "Text",ExpressionUUID->"ac016182-483b-43b6-a430-885ea993c3a0"],
 
 Cell[BoxData[
  TagBox[GridBox[{
@@ -40042,13 +40042,13 @@ AAAAAAAAAPgi/g9A6w1K
            "ImageWidth" -> 3750, "ImageLength" -> 811, "XResolution" -> 150, 
             "YResolution" -> 150, "ResolutionUnit" -> "Inch", "Software" -> 
             "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-            DateObject[{2026, 4, 19, 18, 52, 25.}, "Instant", "Gregorian", 
-              1.], "TimeZoneOffset" -> 1|>, 
+            DateObject[{2026, 4, 19, 19, 8, 52.}, "Instant", "Gregorian", 1.],
+             "TimeZoneOffset" -> 1|>, 
           "Comments" -> {
            "Software" -> 
             "Created with the Wolfram Language : www.wolfram.com", 
             "Creation Time" -> 
-            DateObject[{2026, 4, 19, 18, 52, 25.}, "Instant", "Gregorian", 
+            DateObject[{2026, 4, 19, 19, 8, 52.}, "Instant", "Gregorian", 
               None]}|>],
        Selectable->False],
       DefaultBaseStyle->"ImageGraphics",
@@ -40074,9 +40074,9 @@ Ocean area is preserved.\"\>",
    GridBoxSpacings->{"Columns" -> {{Automatic}}, "Rows" -> {{0.6}}}],
   "Column"]], "Output",
  CellMargins->{{0, 0}, {10, 14}},
- ShowCellLabel->False,ExpressionUUID->"b67233a5-792b-4139-9d79-cef9bcd5b5c2"],
+ ShowCellLabel->False,ExpressionUUID->"b0a8a412-b39c-4367-953d-47957672c4bb"],
 
-Cell["1. What is a cartogram?", "Section",ExpressionUUID->"8d7d58db-7d2f-4d2d-9282-33cc904668dc"],
+Cell["1. What is a cartogram?", "Section",ExpressionUUID->"669d78ae-9826-4df4-bddb-21a741aa8b0c"],
 
 Cell["\<\
 A geographic map of the world devotes enormous screen area to Russia, Canada, \
@@ -40085,7 +40085,7 @@ Netherlands. If the question being asked is \"where do people live?\" or \
 \"where is the economy?\", this is the opposite of what we want. \
 Density-equalising cartograms solve this by reshaping each region so that its \
 area tells the story of a variable of interest.\
-\>", "Text",ExpressionUUID->"8a780dc4-d7bc-424e-8314-ae0d7e19987b"],
+\>", "Text",ExpressionUUID->"7af08f8b-5029-402c-b6bb-f9dcf4b18d67"],
 
 Cell[TextData[{
  "Gastner & Newman's elegant insight (PNAS 2004) is that a map in which \
@@ -40096,11 +40096,11 @@ density ",
     StyleBox["r",
      FontWeight->Bold], ")"}], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "bc770952-169a-4293-adae-2d93b1b45a89"],
+  "91542467-6242-4014-adea-e1c291120553"],
  " is uniform is exactly what we want, and diffusion is the natural process \
 that takes any non-uniform density to a uniform one. We therefore simulate \
 the heat equation"
-}], "Text",ExpressionUUID->"4ffcea8c-42da-48e3-8dd5-21c11e72a477"],
+}], "Text",ExpressionUUID->"3cbbe8a3-33a7-4291-8920-15e4d35ccb2d"],
 
 Cell[BoxData[
  FormBox[
@@ -40123,13 +40123,13 @@ Cell[BoxData[
    RowBox[{"\[PartialD]", "\[CapitalOmega]"}]}], 
   TraditionalForm]], "DisplayFormula",
  TextAlignment->Center,
- FontFamily->"Times",ExpressionUUID->"e8949e6b-7f1d-4eae-a86d-c8f92641b261"],
+ FontFamily->"Times",ExpressionUUID->"c7a601f3-4b77-46d2-bb66-9d2b9ff52aa5"],
 
 Cell["\<\
 on a rectangular domain with Neumann boundary conditions (no flux through the \
 box edge, so mass is conserved), and flow each geographic point through the \
 instantaneous velocity\
-\>", "Text",ExpressionUUID->"0d2c1647-a9e5-44b5-8ddd-231f191c0c49"],
+\>", "Text",ExpressionUUID->"4a2a16ab-59a8-4990-9be9-5dc65e3465d6"],
 
 Cell[BoxData[
  FormBox[
@@ -40155,7 +40155,7 @@ Cell[BoxData[
        FontWeight->Bold], ",", " ", "t", ")"}]]}]}], 
   TraditionalForm]], "DisplayFormula",
  TextAlignment->Center,
- FontFamily->"Times",ExpressionUUID->"4a192539-3f2f-457b-b1b2-17c51c8a5449"],
+ FontFamily->"Times",ExpressionUUID->"7cdcdce2-3b00-4440-a6ef-c91d8aacf911"],
 
 Cell[TextData[{
  "As ",
@@ -40163,15 +40163,15 @@ Cell[TextData[{
   FormBox[
    RowBox[{"t", "\[Rule]", "\[Infinity]"}], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "26a0846d-1d3c-4760-91cc-844821cd1fa7"],
+  "dc789b96-edbc-4cf9-8f37-c501858eab5d"],
  " the density relaxes to its spatial mean and the advected points settle \
 into their cartogram positions. Regions of high initial density draw space \
 inwards and therefore expand; regions of low density are pushed outwards."
-}], "Text",ExpressionUUID->"62d1ce77-c74d-4897-bf73-ace2d0079e87"],
+}], "Text",ExpressionUUID->"8b854c4d-111b-45e5-8fbd-6896a3bf4d29"],
 
-Cell["2. The algorithm, step by step", "Section",ExpressionUUID->"dd7d8f9a-47f2-4ddc-a060-b627fcbad527"],
+Cell["2. The algorithm, step by step", "Section",ExpressionUUID->"22868ec1-fa35-407a-8d0b-9e19883a48db"],
 
-Cell["2.1 Rasterise polygons to a density grid", "Subsection",ExpressionUUID->"fac10760-8738-4ce2-b9c8-11015baecf36"],
+Cell["2.1 Rasterise polygons to a density grid", "Subsection",ExpressionUUID->"c725da59-9672-402f-8c06-71202a6ae366"],
 
 Cell[TextData[{
  "Given a collection of country polygons and a per-country metric ",
@@ -40179,14 +40179,14 @@ Cell[TextData[{
   FormBox[
    SubscriptBox["M", "c"], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "ff1f278c-021f-49d0-b35a-339ac686a519"],
+  "b6a8bf36-3b61-4a08-899d-59803b192954"],
  " (population, GDP, \[Ellipsis]), we set the density inside polygon ",
  Cell[BoxData[
   FormBox["c", TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "71590194-4872-4ebb-9023-64a2a9172665"],
+  "8a43c901-dfc8-429c-ac1c-bb02503d2b2d"],
  " to"
-}], "Text",ExpressionUUID->"60b67c79-9a10-48bc-9c45-5ccbb90b06bc"],
+}], "Text",ExpressionUUID->"470188ed-a622-47b5-a254-f969b6a0e76c"],
 
 Cell[BoxData[
  FormBox[
@@ -40203,7 +40203,7 @@ Cell[BoxData[
      FontWeight->Bold], "\[Element]", "c"}]}], 
   TraditionalForm]], "DisplayFormula",
  TextAlignment->Center,
- FontFamily->"Times",ExpressionUUID->"002da059-3bc2-4400-836f-72d0ac808e4d"],
+ FontFamily->"Times",ExpressionUUID->"949d57d3-a20d-4952-8773-abe696ad07f6"],
 
 Cell[TextData[{
  "where ",
@@ -40211,35 +40211,35 @@ Cell[TextData[{
   FormBox[
    SubscriptBox["A", "c"], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "b20392b6-c7eb-426e-9646-30dab51c7f50"],
+  "f0e67339-8532-450f-a555-4e8109595f98"],
  " is the geographic area of ",
  Cell[BoxData[
   FormBox["c", TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "811968a6-2ba4-49ec-819e-83978c334fc2"],
+  "293e3cb5-0e5d-4dce-baf2-6f6bdc0543d4"],
  ". Integrated over ",
  Cell[BoxData[
   FormBox["c", TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "9993130a-0c9a-4061-8b14-8bff4ad7a9e3"],
+  "181c13ed-f7fb-477b-baf7-4c6ef51258f1"],
  " we recover the metric ",
  Cell[BoxData[
   FormBox[
    SubscriptBox["M", "c"], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "1e41fc59-5c65-438c-b0e1-91499885b6e5"],
+  "be0ea251-ac45-403c-ad61-580f4e92883f"],
  ". Ocean cells are filled with the mean land density so the spatial mean is \
 uniform across the domain and oceans retain their size; only the relative \
 sizes of countries change."
-}], "Text",ExpressionUUID->"5ee2afaa-d7cc-46f7-95a8-c47fcc2258cf"],
+}], "Text",ExpressionUUID->"65c6fc67-5646-4ac9-9027-2641a793e1d6"],
 
 Cell[TextData[{
  "The rasterisation uses a ",
  StyleBox["RegionMember", "Input"],
  "-based subpixel test for anti-aliasing on thin/small countries."
-}], "Text",ExpressionUUID->"64997567-9647-439c-9b28-25145f7ac07f"],
+}], "Text",ExpressionUUID->"39a8ff2b-184a-4cfa-831d-37f55cd130b8"],
 
-Cell["2.2 Solve the diffusion equation", "Subsection",ExpressionUUID->"55039ec0-d071-4f03-b3de-94e24fe6e979"],
+Cell["2.2 Solve the diffusion equation", "Subsection",ExpressionUUID->"fb1abb54-6cfc-414c-a8d3-9be20df246da"],
 
 Cell[TextData[{
  "The Laplacian on a rectangle with Neumann boundary conditions is \
@@ -40249,7 +40249,7 @@ diagonalised by the cosine basis. Wolfram's built-in ",
  StyleBox["FourierDCT[\[CenterEllipsis], 3]", "Input"],
  " implement the DCT-II and its inverse in any number of dimensions with an \
 orthonormal convention, so the full 2D spectrum is one call each. Expanding"
-}], "Text",ExpressionUUID->"04cf3e5a-37d4-4181-9241-3cc824c9f102"],
+}], "Text",ExpressionUUID->"f9cf1eef-54af-485b-8092-7f556cf45182"],
 
 Cell[BoxData[
  FormBox[
@@ -40277,7 +40277,7 @@ Cell[BoxData[
       SubscriptBox["L", "y"]], ")"}]}]}], TraditionalForm]], "DisplayFormula",\
 
  TextAlignment->Center,
- FontFamily->"Times",ExpressionUUID->"5da40588-ce36-4535-978a-2a5cedf705f6"],
+ FontFamily->"Times",ExpressionUUID->"6845a3fd-92c4-4445-b7d0-41eb69bebd0a"],
 
 Cell[TextData[{
  "with eigenvalues ",
@@ -40297,19 +40297,19 @@ Cell[TextData[{
        SubsuperscriptBox["L", "y", "2"]]}], ")"}]}], TraditionalForm]], 
   "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "feafea95-709d-4187-847d-205ea1b7b6d4"],
+  "a8a391ff-db96-4830-ae02-9ea401b2567e"],
  ", the density at any time ",
  Cell[BoxData[
   FormBox["t", TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "ec64a7d7-1ce8-45cc-97de-080c01e92a7c"],
+  "ab6dce12-5b20-47bb-b0bd-d49100147a2f"],
  " is evaluated in ",
  Cell[BoxData[
   FormBox[
    RowBox[{"O", "(", "N", " ", "Log", " ", "N", ")"}], TraditionalForm]], 
   "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "a9af71ed-3c7b-4181-973e-e6d2abb5c041"],
+  "52010b97-bfb9-42be-afbb-b1666a875f3c"],
  " from the cached cosine coefficients ",
  Cell[BoxData[
   FormBox[
@@ -40317,11 +40317,11 @@ Cell[TextData[{
     OverscriptBox["\[Rho]", "^"], 
     RowBox[{"m", " ", "n"}]], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "bdf5fe70-7d63-4ada-8acb-df86374de1ad"],
+  "bdbf1ed0-6351-434e-aee0-08dea9ef93ce"],
  "."
-}], "Text",ExpressionUUID->"ee119f60-e726-42fa-9e47-ee82a75251ec"],
+}], "Text",ExpressionUUID->"4d3be56c-4b5a-44ce-b157-3000b7c5ff8f"],
 
-Cell["2.3 Advect points through the velocity field", "Subsection",ExpressionUUID->"8a1dd4af-9279-4eec-a23c-0ad33e30fb7c"],
+Cell["2.3 Advect points through the velocity field", "Subsection",ExpressionUUID->"9bc747e3-0d7d-49c8-98ab-01823492e301"],
 
 Cell[TextData[{
  "The velocity on the grid is computed by central differences on the current \
@@ -40331,13 +40331,13 @@ point is integrated from ",
   FormBox[
    RowBox[{"t", "=", "0"}], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "01cc375a-f5be-4c51-830d-2bfc67af0854"],
+  "40b723f1-353f-4ad9-bc79-c8e6ea14e3b3"],
  " to ",
  Cell[BoxData[
   FormBox[
    SuperscriptBox["t", "\[Star]"], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "fa9e46bc-ff0f-4244-aca6-503ea2355303"],
+  "5666d038-22af-4219-b79c-16cc5a8e6dfb"],
  " using an explicit Runge\[Dash]Kutta scheme (",
  StyleBox["NDSolveValue[\[CenterEllipsis], Method -> \"ExplicitRungeKutta\"]",
    "Input"],
@@ -40346,11 +40346,11 @@ point is integrated from ",
   FormBox[
    SuperscriptBox["t", "\[Star]"], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "9e2d7ecb-b589-4212-aca7-ce37755950b5"],
+  "7a5ba3b5-ad9e-4512-9d76-a70d2d3e0a98"],
  " is chosen from the decay constant of the slowest non-constant Fourier mode."
-}], "Text",ExpressionUUID->"10ec9af4-32f8-4243-81e4-087ab56db013"],
+}], "Text",ExpressionUUID->"98c148bc-17c4-4e6d-897f-df4ea523452b"],
 
-Cell["2.4 Pre-smoothing", "Subsection",ExpressionUUID->"e2260602-4bde-47fa-81ea-297652644dad"],
+Cell["2.4 Pre-smoothing", "Subsection",ExpressionUUID->"65448da5-926d-4951-9c35-59b1a1d1e09f"],
 
 Cell[TextData[{
  "Because polygon-rasterisation produces step functions, the initial velocity \
@@ -40360,7 +40360,7 @@ field is very stiff. We pre-smooth the density with a small Gaussian filter (",
    RowBox[{"\[Sigma]", "\[TildeTilde]", "1"}], TraditionalForm]], 
   "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "e5eb0691-561f-418d-9d00-bec521d76870"],
+  "bb8676e7-f0e8-4b21-9ed7-94216f934729"],
  " cell), which is mathematically equivalent to starting the diffusion at ",
  Cell[BoxData[
   FormBox[
@@ -40371,13 +40371,13 @@ field is very stiff. We pre-smooth the density with a small Gaussian filter (",
      "\[CapitalDelta]", "y", "/", "2"}]}], TraditionalForm]], "InlineFormula",
   
   FontFamily->"Times",ExpressionUUID->
-  "c98aa1ea-ce87-4827-83a0-3bff17c6b846"],
+  "a074d1ab-895e-41dc-b814-6978f9003c33"],
  ". A small background floor (",
  StyleBox["MeanFloor", "Input"],
  ") is added to avoid division by zero inside zero-density cells."
-}], "Text",ExpressionUUID->"75e12eab-2f6d-4a1b-824a-2067c7581857"],
+}], "Text",ExpressionUUID->"00f8108b-3267-4d5e-8c96-f0fd8970e90e"],
 
-Cell["2.5 Snapshot-cached advection (the default Speed mode)", "Subsection",ExpressionUUID->"72623ed9-a3ba-4ee6-9ebe-afb4d86cc562"],
+Cell["2.5 Snapshot-cached advection (the default Speed mode)", "Subsection",ExpressionUUID->"3616957a-86c7-47fe-989a-9f4a94b2a6b5"],
 
 Cell[TextData[{
  "A naive implementation recomputes the full inverse DCT of ",
@@ -40388,7 +40388,7 @@ Cell[TextData[{
      FontWeight->Bold], ",", " ", "t", ")"}], TraditionalForm]], 
   "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "0cd87023-7d2a-4292-ad3b-6ac2657ca0e3"],
+  "92c6eef8-20d2-4b74-9b7d-9e7933964c61"],
  " at every RK sub-step of the advection ODE. With ~100+ sub-steps on a 192\
 \[Times]384 grid this dominates wall-clock at ~320 s for a single world map. \
 The package avoids it: at construction time we pre-compute a small (default \
@@ -40402,25 +40402,25 @@ The package avoids it: at construction time we pre-compute a small (default \
      SubscriptBox["\[PartialD]", "y"], "\[Rho]"}], ")"}], TraditionalForm]], 
   "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "a6591716-fd8d-4814-a38a-0af9975f2e6c"],
+  "87c0ca2e-18f8-421e-b541-ad747e0916cf"],
  ", spanning ",
  Cell[BoxData[
   FormBox[
    RowBox[{"t", "=", "0"}], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "fa93087f-dcff-400e-a31f-57d29714d430"],
+  "d8a7c080-959a-4f68-a755-280af116eb43"],
  " through ",
  Cell[BoxData[
   FormBox[
    SuperscriptBox["t", "\[Star]"], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "35c44431-871c-4bac-b405-a71541529f4b"],
+  "d13977fa-663b-40ff-8596-20943e36536a"],
  " with more samples packed near ",
  Cell[BoxData[
   FormBox[
    RowBox[{"t", "=", "0"}], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "d7856a1a-4821-48c1-98e8-edb7a4d53691"],
+  "7a581aca-591d-4fe4-a90e-56238ddb1e40"],
  " where the fast Fourier modes collapse. During integration the RHS linearly \
 interpolates between the two bracketing snapshots instead of doing a fresh \
 inverse DCT. Median per-point agreement with the Quality solver is sub-pixel \
@@ -40434,32 +40434,32 @@ at rendering resolution and the full world pipeline drops from \
  ", ",
  StyleBox["WorldCartogram", "Input"],
  ") for the slower, bit-exact variant."
-}], "Text",ExpressionUUID->"10c1721e-6a6f-4c73-9a04-0222361be6bf"],
+}], "Text",ExpressionUUID->"a10f6b2c-a212-418f-b78d-c4ea1ae9b9c2"],
 
-Cell["3. The CartogramWL package", "Section",ExpressionUUID->"10e7a221-345d-408f-a174-d894c4c1b944"],
+Cell["3. The CartogramWL package", "Section",ExpressionUUID->"db2925ac-e5a1-4725-9e23-cd15f2e8d6dd"],
 
-Cell["3.1 Loading", "Subsection",ExpressionUUID->"e90a2ce5-4843-46a7-9f2b-2adee73346bc"],
+Cell["3.1 Loading", "Subsection",ExpressionUUID->"21df18c7-7519-4d98-bbc1-26fc87861d79"],
 
 Cell[TextData[{
  "Clone the repository from GitHub and load the package directly from the ",
  StyleBox["CartogramWL/", "Input"],
  " directory. The package has zero external dependencies."
-}], "Text",ExpressionUUID->"3ad88886-df73-4fa7-b063-0d5847310d2b"],
+}], "Text",ExpressionUUID->"5ed144c0-8a65-4c5e-8971-1127daa769d8"],
 
 Cell[BoxData[
  RowBox[{"Get", "[", "\"\</path/to/wolfram/CartogramWL/CartogramWL.wl\>\"", 
-  "]"}]], "Input",ExpressionUUID->"5f5e1d20-9a9e-479d-995a-26af48d454ca"],
+  "]"}]], "Input",ExpressionUUID->"c04e4425-f632-4b16-9417-2c7f0940ad4c"],
 
 Cell[TextData[{
  "All public symbols are then available in the ",
  StyleBox["CartogramWL`", "Input"],
  " context:"
-}], "Text",ExpressionUUID->"c7821fb5-7df4-4f4d-a874-dcc91d332380"],
+}], "Text",ExpressionUUID->"dde5c340-a206-4f3f-a125-9eb6dd5bac58"],
 
 Cell[BoxData[
- RowBox[{"Names", "[", "\"\<CartogramWL`*\>\"", "]"}]], "Input",ExpressionUUID->"e4043f6b-7dd7-410a-a7d6-9a24fa231ad6"],
+ RowBox[{"Names", "[", "\"\<CartogramWL`*\>\"", "]"}]], "Input",ExpressionUUID->"9f5a837a-3ca5-4ec8-a227-6ea22452fd94"],
 
-Cell["3.2 Low-level primitives", "Subsection",ExpressionUUID->"a283cea1-8dd2-4bf5-b3ff-1ebd14126da5"],
+Cell["3.2 Low-level primitives", "Subsection",ExpressionUUID->"287180bb-38ab-46eb-80a3-88430908deaa"],
 
 Cell[TextData[{
  "The algorithm is exposed as a handful of composable functions that all \
@@ -40471,18 +40471,18 @@ operate on a density array ",
    RowBox[{"i", " ", "\[LeftRightArrow]", " ", "y"}], TraditionalForm]], 
   "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "87c8b1e6-6d58-438f-8ff7-9c27f9291d2c"],
+  "9d8e9ffe-8dd6-4b9d-aa4d-b329dafbcdf4"],
  ", column index ",
  Cell[BoxData[
   FormBox[
    RowBox[{"j", " ", "\[LeftRightArrow]", " ", "x"}], TraditionalForm]], 
   "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "806d14af-2ac6-4bbe-850b-dd0a5a78b899"],
+  "1770d72d-b596-428c-abe0-580fc68b9d3d"],
  " (NumPy convention) and a bounding box ",
  StyleBox["{xmin, ymin, xmax, ymax}", "Input"],
  ":"
-}], "Text",ExpressionUUID->"64555992-19e1-41c1-b1c6-7d4644b81d73"],
+}], "Text",ExpressionUUID->"341bdd85-0f09-4094-9484-03bcd29eddba"],
 
 Cell[BoxData[{
  RowBox[{
@@ -40506,8 +40506,8 @@ Cell[BoxData[{
         RowBox[{"x1", ",", " ", "y1"}], "}"}], ",", " ", 
        RowBox[{"{", 
         RowBox[{"x2", ",", " ", "y2"}], "}"}], ",", " ", "..."}], "}"}]}], 
-    "]"}]}], ";"}]}], "Input",ExpressionUUID->"6e20331b-e02b-4709-94cc-\
-ff2f42c376e6"],
+    "]"}]}], ";"}]}], "Input",ExpressionUUID->"7d139ac6-7832-45f2-a766-\
+12911e1b9216"],
 
 Cell[TextData[{
  "One level up, ",
@@ -40520,7 +40520,7 @@ Cell[TextData[{
  " maps arbitrary points through the deformation; ",
  StyleBox["CartogramTransformPolygon", "Input"],
  " additionally densifies long edges before the transform."
-}], "Text",ExpressionUUID->"f7288a4c-45cc-48c8-88d6-602e831349f1"],
+}], "Text",ExpressionUUID->"19dfc3f7-a8cb-4d25-a3ab-3601fa664c6c"],
 
 Cell[BoxData[{
  RowBox[{
@@ -40542,9 +40542,9 @@ Cell[BoxData[{
   RowBox[{"newPoly", " ", "=", " ", 
    RowBox[{"CartogramTransformPolygon", "[", 
     RowBox[{"cart", ",", " ", "polyRing"}], "]"}]}], ";"}]}], "Input",Expressi\
-onUUID->"7a73dd58-a443-4fae-a3f6-0cd74e901790"],
+onUUID->"c925ca98-6d13-47fd-9ee6-75982f95589f"],
 
-Cell["3.3 The one-liner: WorldCartogram", "Subsection",ExpressionUUID->"14795700-6e67-4f7c-a625-46a976309aaf"],
+Cell["3.3 The one-liner: WorldCartogram", "Subsection",ExpressionUUID->"465e72d1-3d42-41b1-a24d-7aa45371f8f2"],
 
 Cell[TextData[{
  "Most end users want \"given a metric, draw the world\". ",
@@ -40554,7 +40554,7 @@ Cell[TextData[{
  ", and returns a two-panel ",
  StyleBox["GraphicsRow", "Input"],
  " (geographic + cartogram)."
-}], "Text",ExpressionUUID->"b89ea279-c4c9-4b30-b3f1-3e1472ad7c84"],
+}], "Text",ExpressionUUID->"e76d7cdb-67bb-46e7-8068-2c7f35a8b596"],
 
 Cell[BoxData[{
  RowBox[{
@@ -40577,8 +40577,8 @@ Cell[BoxData[{
     RowBox[{"<|", 
      RowBox[{
       RowBox[{"\"\<Germany\>\"", " ", "->", " ", "83."}], ",", " ", "..."}], 
-     "|>"}]}], "}"}], "]"}]}], "Input",ExpressionUUID->"13ffa26c-d564-44fd-\
-a265-187695f1747b"],
+     "|>"}]}], "}"}], "]"}]}], "Input",ExpressionUUID->"bbea0461-c73a-4942-\
+beb3-a6c1504e7863"],
 
 Cell[TextData[{
  "A complete option list is available via ",
@@ -40592,7 +40592,7 @@ Cell[TextData[{
   FormBox[
    RowBox[{"[", "0", ",", "1", "]"}], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "593807a9-c40a-4f7a-9bd5-5cd3a316d9ab"],
+  "948b8474-4c50-43ec-bf3a-4ea0e37d547b"],
  "), ",
  StyleBox["\"Background\"", "Input"],
  " (",
@@ -40614,9 +40614,9 @@ Cell[TextData[{
  " default, or ",
  StyleBox["\"Quality\"", "Input"],
  " for bit-exact output)."
-}], "Text",ExpressionUUID->"dfe19386-2a95-4040-9be7-201612d353b1"],
+}], "Text",ExpressionUUID->"bb4f7823-9510-41b8-a7d5-793887b4d0c4"],
 
-Cell["4. Built-in metrics", "Section",ExpressionUUID->"88b20532-8013-46d6-b937-9541bd3414ea"],
+Cell["4. Built-in metrics", "Section",ExpressionUUID->"28d9c56e-bf53-482f-bff3-817900a9dc5a"],
 
 Cell[TextData[{
  "The four strings ",
@@ -40632,9 +40632,9 @@ floor/ceiling that tame heavy-tailed outliers (Monaco on population density, \
 Luxembourg on GDP per capita). The sections below show each of them in turn; \
 every image on this page is produced by the literal one-line call shown next \
 to it."
-}], "Text",ExpressionUUID->"b47ce213-9725-4004-b9fa-241b3b398d42"],
+}], "Text",ExpressionUUID->"f4a7d6ac-e8f5-4f0c-b3cf-66e4b0b466d6"],
 
-Cell["4.1 Population", "Subsection",ExpressionUUID->"83823bf7-d983-4c5e-921a-9b6250ca494b"],
+Cell["4.1 Population", "Subsection",ExpressionUUID->"893a437d-0029-4953-b1a5-a018a38e3bac"],
 
 Cell["\<\
 The canonical cartogram: each country's area is made proportional to how many \
@@ -40644,11 +40644,11 @@ nearly a billion more people across land areas that look small on a Mercator \
 projection \[LongDash] all four bulge substantially. Russia (11 % of global \
 land but 2 % of humanity), Canada, Australia, Mongolia and the Nordic \
 countries collapse.\
-\>", "Text",ExpressionUUID->"d7723ff8-0523-496e-8a56-a2ce03758c26"],
+\>", "Text",ExpressionUUID->"b3dca303-4717-47d3-a36c-688cb46666a6"],
 
 Cell[BoxData[
  RowBox[{"WorldCartogram", "[", "\"\<Population\>\"", "]"}]], "Input",Expressi\
-onUUID->"4067418c-611c-4e41-88dd-9a2e0ddbf7bb"],
+onUUID->"61549f98-5935-4982-9988-085cb75dab3c"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -50193,12 +50193,12 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJ/geqb7Rq
        "ImageWidth" -> 3334, "ImageLength" -> 739, "XResolution" -> 150, 
         "YResolution" -> 150, "ResolutionUnit" -> "Inch", "Software" -> 
         "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 4, 19, 17, 47, 37.}, "Instant", "Gregorian", 1.], 
+        DateObject[{2026, 4, 19, 19, 0, 41.}, "Instant", "Gregorian", 1.], 
         "TimeZoneOffset" -> 1|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 4, 19, 17, 47, 37.}, "Instant", "Gregorian", 
+        DateObject[{2026, 4, 19, 19, 0, 41.}, "Instant", "Gregorian", 
           None]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
@@ -50206,9 +50206,9 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJ/geqb7Rq
   ImageSizeRaw->{1600.32, 354.72},
   PlotRange->{{0, 1600.32}, {0, 354.72}}]], "Output",
  CellMargins->{{0, 0}, {10, 14}},
- ShowCellLabel->False,ExpressionUUID->"0476e37c-a3d5-4f0a-ae3a-5de221187cd5"],
+ ShowCellLabel->False,ExpressionUUID->"0f659a73-58b8-4b73-b397-41e3f9d5bcd6"],
 
-Cell["4.2 GDP", "Subsection",ExpressionUUID->"682eeea8-18de-4356-9f94-d94274f9fbff"],
+Cell["4.2 GDP", "Subsection",ExpressionUUID->"10430dd1-3192-41cb-ab46-c1fa12d3dfc2"],
 
 Cell["\<\
 Switching to gross domestic product (total value of goods and services \
@@ -50220,10 +50220,10 @@ of the population cartogram wherever the two quantities diverge most: Japan \
 (5\[ThinSpace]th largest economy, 11\[ThinSpace]th most populous) expands \
 here but stays modestly sized in 4.1, while the Democratic Republic of the \
 Congo does the opposite.\
-\>", "Text",ExpressionUUID->"7e85a6ea-9f00-48b7-b308-d9235e9d8f81"],
+\>", "Text",ExpressionUUID->"6e91678a-719c-4ba4-bff3-07fff7ebad71"],
 
 Cell[BoxData[
- RowBox[{"WorldCartogram", "[", "\"\<GDP\>\"", "]"}]], "Input",ExpressionUUID->"35ffd661-6121-4530-94c9-b2c4557de58d"],
+ RowBox[{"WorldCartogram", "[", "\"\<GDP\>\"", "]"}]], "Input",ExpressionUUID->"80ec62b3-3e8e-4c79-b7b4-0ff9e9a488cb"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -61225,12 +61225,12 @@ ruGd
        "ImageWidth" -> 3750, "ImageLength" -> 811, "XResolution" -> 150, 
         "YResolution" -> 150, "ResolutionUnit" -> "Inch", "Software" -> 
         "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 4, 19, 17, 47, 42.}, "Instant", "Gregorian", 1.], 
+        DateObject[{2026, 4, 19, 19, 0, 42.}, "Instant", "Gregorian", 1.], 
         "TimeZoneOffset" -> 1|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 4, 19, 17, 47, 42.}, "Instant", "Gregorian", 
+        DateObject[{2026, 4, 19, 19, 0, 42.}, "Instant", "Gregorian", 
           None]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
@@ -61238,9 +61238,9 @@ ruGd
   ImageSizeRaw->{1800., 389.28},
   PlotRange->{{0, 1800.}, {0, 389.28}}]], "Output",
  CellMargins->{{0, 0}, {10, 14}},
- ShowCellLabel->False,ExpressionUUID->"d596e4c6-bfd1-4f6f-9241-84faa6e9b983"],
+ ShowCellLabel->False,ExpressionUUID->"7d4beafe-4fd2-4cbc-82b0-b7de10e9c30b"],
 
-Cell["4.3 GDP per capita", "Subsection",ExpressionUUID->"5631f322-bc72-4f1f-8d01-8a16c0e03184"],
+Cell["4.3 GDP per capita", "Subsection",ExpressionUUID->"e517063b-175b-44a1-9c3b-5fa39943fef4"],
 
 Cell[TextData[{
  "GDP per capita (",
@@ -61248,7 +61248,7 @@ Cell[TextData[{
   FormBox[
    SubscriptBox["M", "c"], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "731f3aec-05d9-48c1-b9d0-ae88f5ec04a2"],
+  "a0ea5b08-7ddc-48cb-8130-7b7d8ffb2705"],
  " = country GDP divided by country population) rewards wealth density rather \
 than raw wealth. Luxembourg, Switzerland, Singapore, the Gulf petro-states, \
 and the Scandinavian countries visibly bulge; sub-Saharan Africa, Central \
@@ -61256,11 +61256,11 @@ America, and parts of South Asia contract. Comparing this to the plain GDP \
 cartogram in 4.2: China and India shrink here \[LongDash] they are large \
 economies but not rich per head \[LongDash] while small high-income \
 jurisdictions grow."
-}], "Text",ExpressionUUID->"fe8e90d5-17fa-461f-bdf8-4767bb4bff3b"],
+}], "Text",ExpressionUUID->"a14ae18f-1c37-4fdb-b823-0cc34a6f564d"],
 
 Cell[BoxData[
  RowBox[{"WorldCartogram", "[", "\"\<GDPPerCapita\>\"", "]"}]], "Input",Expres\
-sionUUID->"04da24a0-6183-4cb1-9f66-d6a37d8d9399"],
+sionUUID->"0fae25e8-4f45-4dec-b534-9de42f643d9b"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -73294,22 +73294,21 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABX1
        "ImageWidth" -> 3750, "ImageLength" -> 811, "XResolution" -> 150, 
         "YResolution" -> 150, "ResolutionUnit" -> "Inch", "Software" -> 
         "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 4, 19, 17, 47, 48.}, "Instant", "Gregorian", 1.], 
+        DateObject[{2026, 4, 19, 19, 1, 5.}, "Instant", "Gregorian", 1.], 
         "TimeZoneOffset" -> 1|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 4, 19, 17, 47, 48.}, "Instant", "Gregorian", 
-          None]}|>],
+        DateObject[{2026, 4, 19, 19, 1, 5.}, "Instant", "Gregorian", None]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
   ImageSize->680,
   ImageSizeRaw->{1800., 389.28},
   PlotRange->{{0, 1800.}, {0, 389.28}}]], "Output",
  CellMargins->{{0, 0}, {10, 14}},
- ShowCellLabel->False,ExpressionUUID->"550bdf57-a9d3-4ba6-90fe-a113811df2ba"],
+ ShowCellLabel->False,ExpressionUUID->"f23c9577-f89f-4aba-bba6-cb16bb4c4714"],
 
-Cell["4.4 Population density", "Subsection",ExpressionUUID->"6f47c798-4a83-45f4-b8ba-5105001a6a47"],
+Cell["4.4 Population density", "Subsection",ExpressionUUID->"4ac1754e-9da6-4b86-984a-15026225a15e"],
 
 Cell[TextData[{
  "Population density (people per ",
@@ -73317,7 +73316,7 @@ Cell[TextData[{
   FormBox[
    SuperscriptBox["km", "2"], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "1df6011a-fdcd-410f-95dd-e6619b963b76"],
+  "1e5523d8-2886-4d70-963c-d0be223dd9ed"],
  ") asks a third question: not \"where do people live?\" but \"where do \
 people crowd?\". Bangladesh, the Netherlands, Belgium, South Korea, and \
 island states such as Singapore, Malta and Mauritius swell out of all \
@@ -73326,11 +73325,11 @@ Russia, Canada, Australia, Kazakhstan, and much of sub-Saharan Africa \
 collapse. Unlike the absolute-population cartogram in 4.1, large countries \
 like China and the United States end up modestly sized because their \
 populations are diluted across a great deal of territory."
-}], "Text",ExpressionUUID->"8abf3fe5-066a-4c43-801f-9eec4e0753ce"],
+}], "Text",ExpressionUUID->"2ab920c7-4079-40ed-bf62-4e779c666646"],
 
 Cell[BoxData[
  RowBox[{"WorldCartogram", "[", "\"\<PopulationDensity\>\"", "]"}]], "Input",E\
-xpressionUUID->"dba7c0e6-9c16-4d0b-9c65-140bca15ee3f"],
+xpressionUUID->"8d146b3b-a66e-46d7-83c1-6222c6240231"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -84363,12 +84362,12 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAcz6fTSR+
        "ImageWidth" -> 3750, "ImageLength" -> 831, "XResolution" -> 150, 
         "YResolution" -> 150, "ResolutionUnit" -> "Inch", "Software" -> 
         "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 4, 19, 17, 48, 2.}, "Instant", "Gregorian", 1.], 
+        DateObject[{2026, 4, 19, 19, 1, 16.}, "Instant", "Gregorian", 1.], 
         "TimeZoneOffset" -> 1|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 4, 19, 17, 48, 2.}, "Instant", "Gregorian", 
+        DateObject[{2026, 4, 19, 19, 1, 16.}, "Instant", "Gregorian", 
           None]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
@@ -84376,9 +84375,9 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAcz6fTSR+
   ImageSizeRaw->{1800., 398.88},
   PlotRange->{{0, 1800.}, {0, 398.88}}]], "Output",
  CellMargins->{{0, 0}, {10, 14}},
- ShowCellLabel->False,ExpressionUUID->"d000f369-10fc-4f29-9cee-c17e6c9e61a3"],
+ ShowCellLabel->False,ExpressionUUID->"19bbb4ed-924c-4403-a5ca-7b4d8e02eb6b"],
 
-Cell["5. Colour schemes & satellite background", "Section",ExpressionUUID->"9e3ba13b-f8a5-4240-801f-1364b1aed9a9"],
+Cell["5. Colour schemes & satellite background", "Section",ExpressionUUID->"78caa6d3-87de-4b51-9efa-e77b8683064b"],
 
 Cell[TextData[{
  "Pass any ",
@@ -84386,14 +84385,14 @@ Cell[TextData[{
  " gradient as ",
  StyleBox["\"ColorFunction\"", "Input"],
  ":"
-}], "Text",ExpressionUUID->"3d5d5243-cea4-4e97-a120-438a3fa74695"],
+}], "Text",ExpressionUUID->"ef1f92e2-6c2e-4258-a395-639d030f2aa7"],
 
 Cell[BoxData[
  RowBox[{"WorldCartogram", "[", 
   RowBox[{"\"\<PopulationDensity\>\"", ",", "\n", "   ", 
    RowBox[{"\"\<ColorFunction\>\"", " ", "->", " ", 
     RowBox[{"ColorData", "[", "\"\<TemperatureMap\>\"", "]"}]}]}], 
-  "]"}]], "Input",ExpressionUUID->"9926adba-8f38-46da-93fc-1817605df96d"],
+  "]"}]], "Input",ExpressionUUID->"3588e439-171b-435e-9df5-691c707cc06c"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -97285,12 +97284,12 @@ AAAAAAAAAAAAkHf+H/C7VLc=
        "ImageWidth" -> 3750, "ImageLength" -> 831, "XResolution" -> 150, 
         "YResolution" -> 150, "ResolutionUnit" -> "Inch", "Software" -> 
         "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 4, 19, 18, 52, 24.}, "Instant", "Gregorian", 1.], 
+        DateObject[{2026, 4, 19, 19, 8, 53.}, "Instant", "Gregorian", 1.], 
         "TimeZoneOffset" -> 1|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 4, 19, 18, 52, 24.}, "Instant", "Gregorian", 
+        DateObject[{2026, 4, 19, 19, 8, 53.}, "Instant", "Gregorian", 
           None]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
@@ -97298,7 +97297,7 @@ AAAAAAAAAAAAkHf+H/C7VLc=
   ImageSizeRaw->{1800., 398.88},
   PlotRange->{{0, 1800.}, {0, 398.88}}]], "Output",
  CellMargins->{{0, 0}, {10, 14}},
- ShowCellLabel->False,ExpressionUUID->"da1924ce-3d25-45c2-a42a-0aaf5f2290d4"],
+ ShowCellLabel->False,ExpressionUUID->"fa575f51-de68-4a49-9b03-85d3245c892b"],
 
 Cell[TextData[{
  "Set ",
@@ -97308,13 +97307,13 @@ Cell[TextData[{
  " imagery. On the cartogram side the imagery is deformed along with the \
 country geometry, giving an effect similar to a shaded-relief globe being \
 inflated or deflated locally."
-}], "Text",ExpressionUUID->"aac0bae4-9604-42c1-a60a-111eb25222ad"],
+}], "Text",ExpressionUUID->"51c87d77-b20e-4e65-97ca-ad82ffa9a50c"],
 
 Cell[BoxData[
  RowBox[{"WorldCartogram", "[", 
   RowBox[{"\"\<GDP\>\"", ",", " ", 
    RowBox[{"\"\<Background\>\"", " ", "->", " ", "\"\<Satellite\>\""}]}], 
-  "]"}]], "Input",ExpressionUUID->"fcd2b6cc-3e7f-4c05-b094-c16caba45bed"],
+  "]"}]], "Input",ExpressionUUID->"89688d0c-8da2-4e2e-9553-d957dc6b78fa"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -137274,12 +137273,12 @@ AAAAAAAAAPgi/g9A6w1K
        "ImageWidth" -> 3750, "ImageLength" -> 811, "XResolution" -> 150, 
         "YResolution" -> 150, "ResolutionUnit" -> "Inch", "Software" -> 
         "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 4, 19, 18, 52, 25.}, "Instant", "Gregorian", 1.], 
+        DateObject[{2026, 4, 19, 19, 8, 52.}, "Instant", "Gregorian", 1.], 
         "TimeZoneOffset" -> 1|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 4, 19, 18, 52, 25.}, "Instant", "Gregorian", 
+        DateObject[{2026, 4, 19, 19, 8, 52.}, "Instant", "Gregorian", 
           None]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
@@ -137287,9 +137286,9 @@ AAAAAAAAAPgi/g9A6w1K
   ImageSizeRaw->{1800., 389.28},
   PlotRange->{{0, 1800.}, {0, 389.28}}]], "Output",
  CellMargins->{{0, 0}, {10, 14}},
- ShowCellLabel->False,ExpressionUUID->"fd0d4bd8-455a-40d5-8b4e-d7d96ae3a2ac"],
+ ShowCellLabel->False,ExpressionUUID->"6a8fc7d6-2885-4610-829c-c06ef0052e6b"],
 
-Cell["6. Visualising the distortion itself", "Section",ExpressionUUID->"c8d5a1d5-b2f6-4cd6-ad34-004561c85e9c"],
+Cell["6. Visualising the distortion itself", "Section",ExpressionUUID->"9a186546-4325-4da5-a759-d01bbc47d5f2"],
 
 Cell["\<\
 A clean way to see the geometry of the transformation is to overlay a regular \
@@ -137297,7 +137296,7 @@ A clean way to see the geometry of the transformation is to overlay a regular \
 on the right the 325 grid intersections are pushed into the cartogram by the \
 same velocity field that reshaped the countries. The grid therefore encodes \
 the local stretching/compression factor at every point of the domain.\
-\>", "Text",ExpressionUUID->"6e169ccf-36f7-4278-b94c-ef344f0b51e0"],
+\>", "Text",ExpressionUUID->"8c3bc274-ff97-4bb1-94eb-a02b5b594db9"],
 
 Cell[BoxData[
  TagBox[GridBox[{
@@ -151543,13 +151542,13 @@ DwaaNA==
            "ImageWidth" -> 3750, "ImageLength" -> 840, "XResolution" -> 150, 
             "YResolution" -> 150, "ResolutionUnit" -> "Inch", "Software" -> 
             "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-            DateObject[{2026, 4, 19, 18, 52, 37.}, "Instant", "Gregorian", 
-              1.], "TimeZoneOffset" -> 1|>, 
+            DateObject[{2026, 4, 19, 19, 8, 58.}, "Instant", "Gregorian", 1.],
+             "TimeZoneOffset" -> 1|>, 
           "Comments" -> {
            "Software" -> 
             "Created with the Wolfram Language : www.wolfram.com", 
             "Creation Time" -> 
-            DateObject[{2026, 4, 19, 18, 52, 37.}, "Instant", "Gregorian", 
+            DateObject[{2026, 4, 19, 19, 8, 58.}, "Instant", "Gregorian", 
               None]}|>],
        Selectable->False],
       DefaultBaseStyle->"ImageGraphics",
@@ -151576,7 +151575,7 @@ populated continents stretch.\"\>",
    GridBoxSpacings->{"Columns" -> {{Automatic}}, "Rows" -> {{0.6}}}],
   "Column"]], "Output",
  CellMargins->{{0, 0}, {10, 14}},
- ShowCellLabel->False,ExpressionUUID->"0e671160-55b2-4969-8ff5-c5e6c14647bc"],
+ ShowCellLabel->False,ExpressionUUID->"f62838a0-6cd8-4bc8-a0fa-4b9043c65a54"],
 
 Cell[TextData[{
  StyleBox["CartogramDistortionGrid[cart]", "Input"],
@@ -151587,9 +151586,9 @@ Cell[TextData[{
  " to draw, overlay on a ",
  StyleBox["WorldCartogram", "Input"],
  " result to annotate a cartogram with its own distortion field."
-}], "Text",ExpressionUUID->"0a8ea8e7-6554-43b0-8819-9dc6df0402b9"],
+}], "Text",ExpressionUUID->"b7e2975a-6d74-4d8b-9585-a84ad9ddc01b"],
 
-Cell["7. Bringing your own data", "Section",ExpressionUUID->"d4267bdf-cd95-4569-b5a7-47f279005fab"],
+Cell["7. Bringing your own data", "Section",ExpressionUUID->"3818e1e8-82ee-46a7-86e7-c6628c520712"],
 
 Cell[TextData[{
  "Any ",
@@ -151602,7 +151601,7 @@ string. Keys may be ",
  ") or display names (",
  StyleBox["\"United States\"", "Input"],
  ")."
-}], "Text",ExpressionUUID->"efabe1ed-5e1a-48ac-879f-9192a75b5116"],
+}], "Text",ExpressionUUID->"1d39e0fb-bc00-4988-90f3-d8069e90eb7c"],
 
 Cell[BoxData[{
  RowBox[{
@@ -151626,7 +151625,7 @@ Cell[BoxData[{
     RowBox[{"\"\<G20 population (millions)\>\"", ",", " ", "g20"}], "}"}], ",",
     "\n", "   ", 
    RowBox[{"\"\<MissingCountries\>\"", " ", "->", " ", "\"\<ShowGrey\>\""}]}],
-   "]"}]}], "Input",ExpressionUUID->"26cdd907-a9d3-48be-9f82-2e0febc3a099"],
+   "]"}]}], "Input",ExpressionUUID->"97915c76-f315-4f55-beaa-8026cbadb13f"],
 
 Cell[BoxData[
  TagBox[GridBox[{
@@ -161864,13 +161863,13 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfEP9/54IVAM=
            "ImageWidth" -> 3750, "ImageLength" -> 832, "XResolution" -> 150, 
             "YResolution" -> 150, "ResolutionUnit" -> "Inch", "Software" -> 
             "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-            DateObject[{2026, 4, 19, 18, 52, 25.}, "Instant", "Gregorian", 
-              1.], "TimeZoneOffset" -> 1|>, 
+            DateObject[{2026, 4, 19, 19, 8, 53.}, "Instant", "Gregorian", 1.],
+             "TimeZoneOffset" -> 1|>, 
           "Comments" -> {
            "Software" -> 
             "Created with the Wolfram Language : www.wolfram.com", 
             "Creation Time" -> 
-            DateObject[{2026, 4, 19, 18, 52, 25.}, "Instant", "Gregorian", 
+            DateObject[{2026, 4, 19, 19, 8, 53.}, "Instant", "Gregorian", 
               None]}|>],
        Selectable->False],
       DefaultBaseStyle->"ImageGraphics",
@@ -161896,9 +161895,9 @@ diffusion is global.\"\>",
    GridBoxSpacings->{"Columns" -> {{Automatic}}, "Rows" -> {{0.6}}}],
   "Column"]], "Output",
  CellMargins->{{0, 0}, {10, 14}},
- ShowCellLabel->False,ExpressionUUID->"ea52a5af-da26-4ea1-8cb9-4a6f64f6fad1"],
+ ShowCellLabel->False,ExpressionUUID->"391bc41c-3018-492b-b8e9-71973449d40a"],
 
-Cell["8. Implementation notes", "Section",ExpressionUUID->"93b0e2e8-3fb2-41aa-9f8e-e0d21c879126"],
+Cell["8. Implementation notes", "Section",ExpressionUUID->"9aab2787-da50-4e83-ae63-3928eeae9494"],
 
 Cell[TextData[{
  "\[Bullet] ",
@@ -161910,13 +161909,13 @@ tolerance (",
    SuperscriptBox["10", 
     RowBox[{"-", "3"}]], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "06e38073-899b-4297-8a72-3b76f8b6c706"],
+  "0068aa1c-7e19-4c37-b2cb-9996fc408121"],
  " by default) are considered extinct, giving ",
  Cell[BoxData[
   FormBox[
    SuperscriptBox["t", "\[Star]"], TraditionalForm]], "InlineFormula",
   FontFamily->"Times",ExpressionUUID->
-  "979393a1-27f5-48b4-930e-8e1d8a23ade3"],
+  "086f05ce-441e-4288-8022-aea7dbb75c04"],
  ".\n\[Bullet] ",
  "Speed mode replaces the per-sub-step inverse DCT with a linear \
 interpolation between 60 log-spaced density/gradient snapshots, giving \
@@ -161934,14 +161933,14 @@ rasterised grid at a multiple of the positive-cell mean.\n\[Bullet] ",
  " on the Python side of this project.\n\[Bullet] ",
  "The algorithm is grid-convention-compatible with the Python implementation \
 so the two are drop-in interchangeable for debugging / cross-validation."
-}], "Text",ExpressionUUID->"17ac9084-a6a9-4979-9fab-85dfe21f83c0"],
+}], "Text",ExpressionUUID->"86e99d40-311d-42fb-a822-9b032c47ef2e"],
 
-Cell["9. Related work in the Wolfram ecosystem", "Section",ExpressionUUID->"fe654021-65ed-4d3f-a542-796b5dff8b07"],
+Cell["9. Related work in the Wolfram ecosystem", "Section",ExpressionUUID->"6820770a-0a5a-4888-a054-7a66785702c2"],
 
 Cell["\<\
 This is not the first Wolfram-Language treatment of cartograms. Two earlier \
 resources are worth reading alongside this one:\
-\>", "Text",ExpressionUUID->"c62a1ce1-e9e6-4aee-986c-9cf7804a556f"],
+\>", "Text",ExpressionUUID->"82b43744-26b4-4f50-a4b0-66716aa5c939"],
 
 Cell[TextData[{
  "\[Bullet] The 2019 Wolfram Community post ",
@@ -161956,7 +161955,7 @@ written for the 2019 Wolfram Summer School. It focuses on a single country, \
 uses an iterative scaling update rather than diffusion, and is a nice \
 demonstration of how much can be done inside a notebook with no package at \
 all."
-}], "Text",ExpressionUUID->"1c1df0f9-4ef5-44f1-9372-26d4adc8625c"],
+}], "Text",ExpressionUUID->"a4dff88e-147e-4bb6-b6ff-0ba762ce17df"],
 
 Cell[TextData[{
  "\[Bullet] ",
@@ -161974,7 +161973,7 @@ cartogram directly from an ",
  StyleBox["WorldCartogram", "Input"],
  ", runs inside the Wolfram Cloud with no installation, and is the right tool \
 when you need a quick cartogram without thinking about parameters."
-}], "Text",ExpressionUUID->"6229f890-d3ef-4d29-b679-c2ec8ac84a22"],
+}], "Text",ExpressionUUID->"7086d207-ded9-4de5-8f84-4327e9dc5bc6"],
 
 Cell[TextData[{
  "Relative to those two, the contribution of the present package is (a) a \
@@ -161992,9 +161991,9 @@ country set; (b) built-in support for ocean-area preservation, user-supplied ",
  StyleBox["PerformanceGoal -> \"Speed\"", "Input"],
  " mode that cuts a full world cartogram from ~5 minutes to under a minute \
 while staying sub-pixel-accurate."
-}], "Text",ExpressionUUID->"57baef19-5d66-426d-ad43-eebe145655c6"],
+}], "Text",ExpressionUUID->"bf269a83-ff13-4eb1-a27f-0282cb1eae82"],
 
-Cell["10. References", "Section",ExpressionUUID->"7fa7aa0c-22d1-4e2a-8fc8-f49d60a54572"],
+Cell["10. References", "Section",ExpressionUUID->"5888ad8b-502f-4931-9f1f-b49dcc50dc15"],
 
 Cell[TextData[{
  "\[Bullet] M. T. Gastner & M. E. J. Newman, \"Diffusion-based method for \
@@ -162025,14 +162024,14 @@ producing density-equalizing maps\", ",
  ", and ",
  StyleBox["NDSolveValue", "Input"],
  "."
-}], "Text",ExpressionUUID->"b3106915-767a-48a5-bca8-b93aa939813b"]
+}], "Text",ExpressionUUID->"6c915c98-24f7-42d5-a805-9854f737261e"]
 },
 Saveable->True,
 WindowSize->{1100, 800},
 WindowMargins->{{Automatic, 0}, {Automatic, 0}},
 FrontEndVersion->"15.0 for Mac OS X ARM (64-bit) (October 27, 2025)",
 StyleDefinitions->"Default.nb",
-ExpressionUUID->"d2cf0dd8-2ee1-4620-a9bf-2d2f1de4efe2"
+ExpressionUUID->"f4233626-80bd-41fe-99a4-6f7c09bb837c"
 ]
 (* End of Notebook Content *)
 
@@ -162045,92 +162044,92 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
-Cell[554, 20, 116, 0, 70, "Title",ExpressionUUID->"e71e176d-580e-4c2d-97f0-5ab6fc05c500"],
-Cell[673, 22, 191, 3, 70, "Subtitle",ExpressionUUID->"756e42e8-a414-4393-9ac5-9d820b8ee206"],
-Cell[867, 27, 334, 8, 70, "Text",ExpressionUUID->"3bf430ba-a172-4473-84d6-ce93c2844ab1"],
-Cell[1204, 37, 82, 0, 70, "Section",ExpressionUUID->"316d0cb8-ce47-4799-a5ce-fc14585bdf16"],
-Cell[1289, 39, 1856, 43, 70, "Text",ExpressionUUID->"557c33a4-1dc4-4c7b-9c7e-0c0b5cb64f12"],
-Cell[3148, 84, 2438526, 39992, 70, "Output",ExpressionUUID->"b67233a5-792b-4139-9d79-cef9bcd5b5c2"],
-Cell[2441677, 40078, 97, 0, 70, "Section",ExpressionUUID->"8d7d58db-7d2f-4d2d-9282-33cc904668dc"],
-Cell[2441777, 40080, 503, 7, 70, "Text",ExpressionUUID->"8a780dc4-d7bc-424e-8314-ae0d7e19987b"],
-Cell[2442283, 40089, 561, 13, 70, "Text",ExpressionUUID->"4ffcea8c-42da-48e3-8dd5-21c11e72a477"],
-Cell[2442847, 40104, 749, 21, 70, "DisplayFormula",ExpressionUUID->"e8949e6b-7f1d-4eae-a86d-c8f92641b261"],
-Cell[2443599, 40127, 259, 4, 70, "Text",ExpressionUUID->"0d2c1647-a9e5-44b5-8ddd-231f191c0c49"],
-Cell[2443861, 40133, 695, 24, 70, "DisplayFormula",ExpressionUUID->"4a192539-3f2f-457b-b1b2-17c51c8a5449"],
-Cell[2444559, 40159, 506, 10, 70, "Text",ExpressionUUID->"62d1ce77-c74d-4897-bf73-ace2d0079e87"],
-Cell[2445068, 40171, 104, 0, 70, "Section",ExpressionUUID->"dd7d8f9a-47f2-4ddc-a060-b627fcbad527"],
-Cell[2445175, 40173, 117, 0, 70, "Subsection",ExpressionUUID->"fac10760-8738-4ce2-b9c8-11015baecf36"],
-Cell[2445295, 40175, 549, 13, 70, "Text",ExpressionUUID->"60b67c79-9a10-48bc-9c45-5ccbb90b06bc"],
-Cell[2445847, 40190, 492, 15, 70, "DisplayFormula",ExpressionUUID->"002da059-3bc2-4400-836f-72d0ac808e4d"],
-Cell[2446342, 40207, 997, 26, 70, "Text",ExpressionUUID->"5ee2afaa-d7cc-46f7-95a8-c47fcc2258cf"],
-Cell[2447342, 40235, 215, 4, 70, "Text",ExpressionUUID->"64997567-9647-439c-9b28-25145f7ac07f"],
-Cell[2447560, 40241, 109, 0, 70, "Subsection",ExpressionUUID->"55039ec0-d071-4f03-b3de-94e24fe6e979"],
-Cell[2447672, 40243, 484, 8, 70, "Text",ExpressionUUID->"04cf3e5a-37d4-4181-9241-3cc824c9f102"],
-Cell[2448159, 40253, 837, 26, 70, "DisplayFormula",ExpressionUUID->"5da40588-ce36-4535-978a-2a5cedf705f6"],
-Cell[2448999, 40281, 1286, 40, 70, "Text",ExpressionUUID->"ee119f60-e726-42fa-9e47-ee82a75251ec"],
-Cell[2450288, 40323, 121, 0, 70, "Subsection",ExpressionUUID->"8a1dd4af-9279-4eec-a23c-0ad33e30fb7c"],
-Cell[2450412, 40325, 1069, 25, 70, "Text",ExpressionUUID->"10ec9af4-32f8-4243-81e4-087ab56db013"],
-Cell[2451484, 40352, 94, 0, 70, "Subsection",ExpressionUUID->"e2260602-4bde-47fa-81ea-297652644dad"],
-Cell[2451581, 40354, 968, 23, 70, "Text",ExpressionUUID->"75e12eab-2f6d-4a1b-824a-2067c7581857"],
-Cell[2452552, 40379, 131, 0, 70, "Subsection",ExpressionUUID->"72623ed9-a3ba-4ee6-9ebe-afb4d86cc562"],
-Cell[2452686, 40381, 2205, 55, 70, "Text",ExpressionUUID->"10c1721e-6a6f-4c73-9a04-0222361be6bf"],
-Cell[2454894, 40438, 100, 0, 70, "Section",ExpressionUUID->"10e7a221-345d-408f-a174-d894c4c1b944"],
-Cell[2454997, 40440, 88, 0, 70, "Subsection",ExpressionUUID->"e90a2ce5-4843-46a7-9f2b-2adee73346bc"],
-Cell[2455088, 40442, 254, 4, 70, "Text",ExpressionUUID->"3ad88886-df73-4fa7-b063-0d5847310d2b"],
-Cell[2455345, 40448, 164, 2, 70, "Input",ExpressionUUID->"5f5e1d20-9a9e-479d-995a-26af48d454ca"],
-Cell[2455512, 40452, 181, 4, 70, "Text",ExpressionUUID->"c7821fb5-7df4-4f4d-a874-dcc91d332380"],
-Cell[2455696, 40458, 133, 1, 70, "Input",ExpressionUUID->"e4043f6b-7dd7-410a-a7d6-9a24fa231ad6"],
-Cell[2455832, 40461, 101, 0, 70, "Subsection",ExpressionUUID->"a283cea1-8dd2-4bf5-b3ff-1ebd14126da5"],
-Cell[2455936, 40463, 762, 21, 70, "Text",ExpressionUUID->"64555992-19e1-41c1-b1c6-7d4644b81d73"],
-Cell[2456701, 40486, 810, 23, 70, "Input",ExpressionUUID->"6e20331b-e02b-4709-94cc-ff2f42c376e6"],
-Cell[2457514, 40511, 559, 11, 70, "Text",ExpressionUUID->"f7288a4c-45cc-48c8-88d6-602e831349f1"],
-Cell[2458076, 40524, 832, 20, 70, "Input",ExpressionUUID->"7a73dd58-a443-4fae-a3f6-0cd74e901790"],
-Cell[2458911, 40546, 110, 0, 70, "Subsection",ExpressionUUID->"14795700-6e67-4f7c-a625-46a976309aaf"],
-Cell[2459024, 40548, 375, 8, 70, "Text",ExpressionUUID->"b89ea279-c4c9-4b30-b3f1-3e1472ad7c84"],
-Cell[2459402, 40558, 918, 22, 70, "Input",ExpressionUUID->"13ffa26c-d564-44fd-a265-187695f1747b"],
-Cell[2460323, 40582, 1035, 34, 70, "Text",ExpressionUUID->"dfe19386-2a95-4040-9be7-201612d353b1"],
-Cell[2461361, 40618, 93, 0, 70, "Section",ExpressionUUID->"88b20532-8013-46d6-b937-9541bd3414ea"],
-Cell[2461457, 40620, 596, 14, 70, "Text",ExpressionUUID->"b47ce213-9725-4004-b9fa-241b3b398d42"],
-Cell[2462056, 40636, 91, 0, 70, "Subsection",ExpressionUUID->"83823bf7-d983-4c5e-921a-9b6250ca494b"],
-Cell[2462150, 40638, 564, 8, 70, "Text",ExpressionUUID->"d7723ff8-0523-496e-8a56-a2ce03758c26"],
-Cell[2462717, 40648, 141, 2, 70, "Input",ExpressionUUID->"4067418c-611c-4e41-88dd-9a2e0ddbf7bb"],
-Cell[2462861, 40652, 582428, 9556, 70, "Output",ExpressionUUID->"0476e37c-a3d5-4f0a-ae3a-5de221187cd5"],
-Cell[3045292, 50210, 84, 0, 70, "Subsection",ExpressionUUID->"682eeea8-18de-4356-9f94-d94274f9fbff"],
-Cell[3045379, 50212, 720, 10, 70, "Text",ExpressionUUID->"7e85a6ea-9f00-48b7-b308-d9235e9d8f81"],
-Cell[3046102, 50224, 132, 1, 70, "Input",ExpressionUUID->"35ffd661-6121-4530-94c9-b2c4557de58d"],
-Cell[3046237, 50227, 671247, 11013, 70, "Output",ExpressionUUID->"d596e4c6-bfd1-4f6f-9241-84faa6e9b983"],
-Cell[3717487, 61242, 95, 0, 70, "Subsection",ExpressionUUID->"5631f322-bc72-4f1f-8d01-8a16c0e03184"],
-Cell[3717585, 61244, 751, 14, 70, "Text",ExpressionUUID->"fe8e90d5-17fa-461f-bdf8-4767bb4bff3b"],
-Cell[3718339, 61260, 143, 2, 70, "Input",ExpressionUUID->"04da24a0-6183-4cb1-9f66-d6a37d8d9399"],
-Cell[3718485, 61264, 734203, 12045, 70, "Output",ExpressionUUID->"550bdf57-a9d3-4ba6-90fe-a113811df2ba"],
-Cell[4452691, 73311, 99, 0, 70, "Subsection",ExpressionUUID->"6f47c798-4a83-45f4-b8ba-5105001a6a47"],
-Cell[4452793, 73313, 866, 15, 70, "Text",ExpressionUUID->"8abf3fe5-066a-4c43-801f-9eec4e0753ce"],
-Cell[4453662, 73330, 148, 2, 70, "Input",ExpressionUUID->"dba7c0e6-9c16-4d0b-9c65-140bca15ee3f"],
-Cell[4453813, 73334, 673176, 11044, 70, "Output",ExpressionUUID->"d000f369-10fc-4f29-9cee-c17e6c9e61a3"],
-Cell[5126992, 84380, 114, 0, 70, "Section",ExpressionUUID->"9e3ba13b-f8a5-4240-801f-1364b1aed9a9"],
-Cell[5127109, 84382, 193, 6, 70, "Text",ExpressionUUID->"3d5d5243-cea4-4e97-a120-438a3fa74695"],
-Cell[5127305, 84390, 299, 5, 70, "Input",ExpressionUUID->"9926adba-8f38-46da-93fc-1817605df96d"],
-Cell[5127607, 84397, 786557, 12903, 70, "Output",ExpressionUUID->"da1924ce-3d25-45c2-a42a-0aaf5f2290d4"],
-Cell[5914167, 97302, 459, 8, 70, "Text",ExpressionUUID->"aac0bae4-9604-42c1-a60a-111eb25222ad"],
-Cell[5914629, 97312, 231, 4, 70, "Input",ExpressionUUID->"fcd2b6cc-3e7f-4c05-b094-c16caba45bed"],
-Cell[5914863, 97318, 2437701, 39971, 70, "Output",ExpressionUUID->"fd0d4bd8-455a-40d5-8b4e-d7d96ae3a2ac"],
-Cell[8352567, 137291, 110, 0, 70, "Section",ExpressionUUID->"c8d5a1d5-b2f6-4cd6-ad34-004561c85e9c"],
-Cell[8352680, 137293, 465, 6, 70, "Text",ExpressionUUID->"6e169ccf-36f7-4278-b94c-ef344f0b51e0"],
-Cell[8353148, 137301, 869908, 14277, 70, "Output",ExpressionUUID->"0e671160-55b2-4969-8ff5-c5e6c14647bc"],
-Cell[9223059, 151580, 391, 9, 70, "Text",ExpressionUUID->"0a8ea8e7-6554-43b0-8819-9dc6df0402b9"],
-Cell[9223453, 151591, 99, 0, 70, "Section",ExpressionUUID->"d4267bdf-cd95-4569-b5a7-47f279005fab"],
-Cell[9223555, 151593, 394, 11, 70, "Text",ExpressionUUID->"efabe1ed-5e1a-48ac-879f-9192a75b5116"],
-Cell[9223952, 151606, 1006, 22, 70, "Input",ExpressionUUID->"26cdd907-a9d3-48be-9f82-2e0febc3a099"],
-Cell[9224961, 151630, 625381, 10268, 70, "Output",ExpressionUUID->"ea52a5af-da26-4ea1-8cb9-4a6f64f6fad1"],
-Cell[9850345, 161900, 97, 0, 70, "Section",ExpressionUUID->"93b0e2e8-3fb2-41aa-9f8e-e0d21c879126"],
-Cell[9850445, 161902, 1690, 34, 70, "Text",ExpressionUUID->"17ac9084-a6a9-4979-9fab-85dfe21f83c0"],
-Cell[9852138, 161938, 114, 0, 70, "Section",ExpressionUUID->"fe654021-65ed-4d3f-a542-796b5dff8b07"],
-Cell[9852255, 161940, 204, 3, 70, "Text",ExpressionUUID->"c62a1ce1-e9e6-4aee-986c-9cf7804a556f"],
-Cell[9852462, 161945, 681, 13, 70, "Text",ExpressionUUID->"1c1df0f9-4ef5-44f1-9372-26d4adc8625c"],
-Cell[9853146, 161960, 790, 16, 70, "Text",ExpressionUUID->"6229f890-d3ef-4d29-b679-c2ec8ac84a22"],
-Cell[9853939, 161978, 829, 16, 70, "Text",ExpressionUUID->"57baef19-5d66-426d-ad43-eebe145655c6"],
-Cell[9854771, 161996, 88, 0, 70, "Section",ExpressionUUID->"7fa7aa0c-22d1-4e2a-8fc8-f49d60a54572"],
-Cell[9854862, 161998, 907, 29, 70, "Text",ExpressionUUID->"b3106915-767a-48a5-bca8-b93aa939813b"]
+Cell[554, 20, 116, 0, 70, "Title",ExpressionUUID->"1076d06a-3901-4f4f-a9ea-8a41e7ad9ade"],
+Cell[673, 22, 191, 3, 70, "Subtitle",ExpressionUUID->"64ceda37-7629-41a0-8090-0520414bc0e0"],
+Cell[867, 27, 334, 8, 70, "Text",ExpressionUUID->"d9e815d5-e25b-4f7b-9266-8df6601fc0f2"],
+Cell[1204, 37, 82, 0, 70, "Section",ExpressionUUID->"1b6b2d43-fddf-4117-a84d-9c7995c44a80"],
+Cell[1289, 39, 1856, 43, 70, "Text",ExpressionUUID->"ac016182-483b-43b6-a430-885ea993c3a0"],
+Cell[3148, 84, 2438522, 39992, 70, "Output",ExpressionUUID->"b0a8a412-b39c-4367-953d-47957672c4bb"],
+Cell[2441673, 40078, 97, 0, 70, "Section",ExpressionUUID->"669d78ae-9826-4df4-bddb-21a741aa8b0c"],
+Cell[2441773, 40080, 503, 7, 70, "Text",ExpressionUUID->"7af08f8b-5029-402c-b6bb-f9dcf4b18d67"],
+Cell[2442279, 40089, 561, 13, 70, "Text",ExpressionUUID->"3cbbe8a3-33a7-4291-8920-15e4d35ccb2d"],
+Cell[2442843, 40104, 749, 21, 70, "DisplayFormula",ExpressionUUID->"c7a601f3-4b77-46d2-bb66-9d2b9ff52aa5"],
+Cell[2443595, 40127, 259, 4, 70, "Text",ExpressionUUID->"4a2a16ab-59a8-4990-9be9-5dc65e3465d6"],
+Cell[2443857, 40133, 695, 24, 70, "DisplayFormula",ExpressionUUID->"7cdcdce2-3b00-4440-a6ef-c91d8aacf911"],
+Cell[2444555, 40159, 506, 10, 70, "Text",ExpressionUUID->"8b854c4d-111b-45e5-8fbd-6896a3bf4d29"],
+Cell[2445064, 40171, 104, 0, 70, "Section",ExpressionUUID->"22868ec1-fa35-407a-8d0b-9e19883a48db"],
+Cell[2445171, 40173, 117, 0, 70, "Subsection",ExpressionUUID->"c725da59-9672-402f-8c06-71202a6ae366"],
+Cell[2445291, 40175, 549, 13, 70, "Text",ExpressionUUID->"470188ed-a622-47b5-a254-f969b6a0e76c"],
+Cell[2445843, 40190, 492, 15, 70, "DisplayFormula",ExpressionUUID->"949d57d3-a20d-4952-8773-abe696ad07f6"],
+Cell[2446338, 40207, 997, 26, 70, "Text",ExpressionUUID->"65c6fc67-5646-4ac9-9027-2641a793e1d6"],
+Cell[2447338, 40235, 215, 4, 70, "Text",ExpressionUUID->"39a8ff2b-184a-4cfa-831d-37f55cd130b8"],
+Cell[2447556, 40241, 109, 0, 70, "Subsection",ExpressionUUID->"fb1abb54-6cfc-414c-a8d3-9be20df246da"],
+Cell[2447668, 40243, 484, 8, 70, "Text",ExpressionUUID->"f9cf1eef-54af-485b-8092-7f556cf45182"],
+Cell[2448155, 40253, 837, 26, 70, "DisplayFormula",ExpressionUUID->"6845a3fd-92c4-4445-b7d0-41eb69bebd0a"],
+Cell[2448995, 40281, 1286, 40, 70, "Text",ExpressionUUID->"4d3be56c-4b5a-44ce-b157-3000b7c5ff8f"],
+Cell[2450284, 40323, 121, 0, 70, "Subsection",ExpressionUUID->"9bc747e3-0d7d-49c8-98ab-01823492e301"],
+Cell[2450408, 40325, 1069, 25, 70, "Text",ExpressionUUID->"98c148bc-17c4-4e6d-897f-df4ea523452b"],
+Cell[2451480, 40352, 94, 0, 70, "Subsection",ExpressionUUID->"65448da5-926d-4951-9c35-59b1a1d1e09f"],
+Cell[2451577, 40354, 968, 23, 70, "Text",ExpressionUUID->"00f8108b-3267-4d5e-8c96-f0fd8970e90e"],
+Cell[2452548, 40379, 131, 0, 70, "Subsection",ExpressionUUID->"3616957a-86c7-47fe-989a-9f4a94b2a6b5"],
+Cell[2452682, 40381, 2205, 55, 70, "Text",ExpressionUUID->"a10f6b2c-a212-418f-b78d-c4ea1ae9b9c2"],
+Cell[2454890, 40438, 100, 0, 70, "Section",ExpressionUUID->"db2925ac-e5a1-4725-9e23-cd15f2e8d6dd"],
+Cell[2454993, 40440, 88, 0, 70, "Subsection",ExpressionUUID->"21df18c7-7519-4d98-bbc1-26fc87861d79"],
+Cell[2455084, 40442, 254, 4, 70, "Text",ExpressionUUID->"5ed144c0-8a65-4c5e-8971-1127daa769d8"],
+Cell[2455341, 40448, 164, 2, 70, "Input",ExpressionUUID->"c04e4425-f632-4b16-9417-2c7f0940ad4c"],
+Cell[2455508, 40452, 181, 4, 70, "Text",ExpressionUUID->"dde5c340-a206-4f3f-a125-9eb6dd5bac58"],
+Cell[2455692, 40458, 133, 1, 70, "Input",ExpressionUUID->"9f5a837a-3ca5-4ec8-a227-6ea22452fd94"],
+Cell[2455828, 40461, 101, 0, 70, "Subsection",ExpressionUUID->"287180bb-38ab-46eb-80a3-88430908deaa"],
+Cell[2455932, 40463, 762, 21, 70, "Text",ExpressionUUID->"341bdd85-0f09-4094-9484-03bcd29eddba"],
+Cell[2456697, 40486, 810, 23, 70, "Input",ExpressionUUID->"7d139ac6-7832-45f2-a766-12911e1b9216"],
+Cell[2457510, 40511, 559, 11, 70, "Text",ExpressionUUID->"19dfc3f7-a8cb-4d25-a3ab-3601fa664c6c"],
+Cell[2458072, 40524, 832, 20, 70, "Input",ExpressionUUID->"c925ca98-6d13-47fd-9ee6-75982f95589f"],
+Cell[2458907, 40546, 110, 0, 70, "Subsection",ExpressionUUID->"465e72d1-3d42-41b1-a24d-7aa45371f8f2"],
+Cell[2459020, 40548, 375, 8, 70, "Text",ExpressionUUID->"e76d7cdb-67bb-46e7-8068-2c7f35a8b596"],
+Cell[2459398, 40558, 918, 22, 70, "Input",ExpressionUUID->"bbea0461-c73a-4942-beb3-a6c1504e7863"],
+Cell[2460319, 40582, 1035, 34, 70, "Text",ExpressionUUID->"bb4f7823-9510-41b8-a7d5-793887b4d0c4"],
+Cell[2461357, 40618, 93, 0, 70, "Section",ExpressionUUID->"28d9c56e-bf53-482f-bff3-817900a9dc5a"],
+Cell[2461453, 40620, 596, 14, 70, "Text",ExpressionUUID->"f4a7d6ac-e8f5-4f0c-b3cf-66e4b0b466d6"],
+Cell[2462052, 40636, 91, 0, 70, "Subsection",ExpressionUUID->"893a437d-0029-4953-b1a5-a018a38e3bac"],
+Cell[2462146, 40638, 564, 8, 70, "Text",ExpressionUUID->"b3dca303-4717-47d3-a36c-688cb46666a6"],
+Cell[2462713, 40648, 141, 2, 70, "Input",ExpressionUUID->"61549f98-5935-4982-9988-085cb75dab3c"],
+Cell[2462857, 40652, 582426, 9556, 70, "Output",ExpressionUUID->"0f659a73-58b8-4b73-b397-41e3f9d5bcd6"],
+Cell[3045286, 50210, 84, 0, 70, "Subsection",ExpressionUUID->"10430dd1-3192-41cb-ab46-c1fa12d3dfc2"],
+Cell[3045373, 50212, 720, 10, 70, "Text",ExpressionUUID->"6e91678a-719c-4ba4-bff3-07fff7ebad71"],
+Cell[3046096, 50224, 132, 1, 70, "Input",ExpressionUUID->"80ec62b3-3e8e-4c79-b7b4-0ff9e9a488cb"],
+Cell[3046231, 50227, 671245, 11013, 70, "Output",ExpressionUUID->"7d4beafe-4fd2-4cbc-82b0-b7de10e9c30b"],
+Cell[3717479, 61242, 95, 0, 70, "Subsection",ExpressionUUID->"e517063b-175b-44a1-9c3b-5fa39943fef4"],
+Cell[3717577, 61244, 751, 14, 70, "Text",ExpressionUUID->"a14ae18f-1c37-4fdb-b823-0cc34a6f564d"],
+Cell[3718331, 61260, 143, 2, 70, "Input",ExpressionUUID->"0fae25e8-4f45-4dec-b534-9de42f643d9b"],
+Cell[3718477, 61264, 734188, 12044, 70, "Output",ExpressionUUID->"f23c9577-f89f-4aba-bba6-cb16bb4c4714"],
+Cell[4452668, 73310, 99, 0, 70, "Subsection",ExpressionUUID->"4ac1754e-9da6-4b86-984a-15026225a15e"],
+Cell[4452770, 73312, 866, 15, 70, "Text",ExpressionUUID->"2ab920c7-4079-40ed-bf62-4e779c666646"],
+Cell[4453639, 73329, 148, 2, 70, "Input",ExpressionUUID->"8d146b3b-a66e-46d7-83c1-6222c6240231"],
+Cell[4453790, 73333, 673176, 11044, 70, "Output",ExpressionUUID->"19bbb4ed-924c-4403-a5ca-7b4d8e02eb6b"],
+Cell[5126969, 84379, 114, 0, 70, "Section",ExpressionUUID->"78caa6d3-87de-4b51-9efa-e77b8683064b"],
+Cell[5127086, 84381, 193, 6, 70, "Text",ExpressionUUID->"ef1f92e2-6c2e-4258-a395-639d030f2aa7"],
+Cell[5127282, 84389, 299, 5, 70, "Input",ExpressionUUID->"3588e439-171b-435e-9df5-691c707cc06c"],
+Cell[5127584, 84396, 786555, 12903, 70, "Output",ExpressionUUID->"fa575f51-de68-4a49-9b03-85d3245c892b"],
+Cell[5914142, 97301, 459, 8, 70, "Text",ExpressionUUID->"51c87d77-b20e-4e65-97ca-ad82ffa9a50c"],
+Cell[5914604, 97311, 231, 4, 70, "Input",ExpressionUUID->"89688d0c-8da2-4e2e-9553-d957dc6b78fa"],
+Cell[5914838, 97317, 2437699, 39971, 70, "Output",ExpressionUUID->"6a8fc7d6-2885-4610-829c-c06ef0052e6b"],
+Cell[8352540, 137290, 110, 0, 70, "Section",ExpressionUUID->"9a186546-4325-4da5-a759-d01bbc47d5f2"],
+Cell[8352653, 137292, 465, 6, 70, "Text",ExpressionUUID->"8c3bc274-ff97-4bb1-94eb-a02b5b594db9"],
+Cell[8353121, 137300, 869904, 14277, 70, "Output",ExpressionUUID->"f62838a0-6cd8-4bc8-a0fa-4b9043c65a54"],
+Cell[9223028, 151579, 391, 9, 70, "Text",ExpressionUUID->"b7e2975a-6d74-4d8b-9585-a84ad9ddc01b"],
+Cell[9223422, 151590, 99, 0, 70, "Section",ExpressionUUID->"3818e1e8-82ee-46a7-86e7-c6628c520712"],
+Cell[9223524, 151592, 394, 11, 70, "Text",ExpressionUUID->"1d39e0fb-bc00-4988-90f3-d8069e90eb7c"],
+Cell[9223921, 151605, 1006, 22, 70, "Input",ExpressionUUID->"97915c76-f315-4f55-beaa-8026cbadb13f"],
+Cell[9224930, 151629, 625377, 10268, 70, "Output",ExpressionUUID->"391bc41c-3018-492b-b8e9-71973449d40a"],
+Cell[9850310, 161899, 97, 0, 70, "Section",ExpressionUUID->"9aab2787-da50-4e83-ae63-3928eeae9494"],
+Cell[9850410, 161901, 1690, 34, 70, "Text",ExpressionUUID->"86e99d40-311d-42fb-a822-9b032c47ef2e"],
+Cell[9852103, 161937, 114, 0, 70, "Section",ExpressionUUID->"6820770a-0a5a-4888-a054-7a66785702c2"],
+Cell[9852220, 161939, 204, 3, 70, "Text",ExpressionUUID->"82b43744-26b4-4f50-a4b0-66716aa5c939"],
+Cell[9852427, 161944, 681, 13, 70, "Text",ExpressionUUID->"a4dff88e-147e-4bb6-b6ff-0ba762ce17df"],
+Cell[9853111, 161959, 790, 16, 70, "Text",ExpressionUUID->"7086d207-ded9-4de5-8f84-4327e9dc5bc6"],
+Cell[9853904, 161977, 829, 16, 70, "Text",ExpressionUUID->"bf269a83-ff13-4eb1-a27f-0282cb1eae82"],
+Cell[9854736, 161995, 88, 0, 70, "Section",ExpressionUUID->"5888ad8b-502f-4931-9f1f-b49dcc50dc15"],
+Cell[9854827, 161997, 907, 29, 70, "Text",ExpressionUUID->"6c915c98-24f7-42d5-a805-9854f737261e"]
 }
 ]
 *)
