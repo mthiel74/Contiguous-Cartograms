@@ -48,6 +48,47 @@ class WorldCartogramResult:
     deformed_geometries: list
     figure: Any = None
 
+    # ------------------------------------------------------------------
+    def to_gdf(self, crs: Optional[str] = None):
+        """Return the deformed cartogram as a GeoDataFrame.
+
+        The result has the same attribute columns as the source world
+        map (name, ISO code, the metric value, etc.) and its
+        ``geometry`` column holds the cartogram-deformed shapes. Pass
+        ``crs="EPSG:4326"`` to get lat/lon coordinates suitable for
+        web-map overlays or GeoJSON export; pass any other PROJ/EPSG
+        string to reproject accordingly. Leave unset to keep the
+        internal working CRS (typically Equal Earth ``"EPSG:8857"``).
+        """
+        import geopandas as gpd
+        src = self.world_map.gdf
+        gdf = gpd.GeoDataFrame(
+            src.drop(columns=src.geometry.name).copy(),
+            geometry=list(self.deformed_geometries),
+            crs=src.crs,
+        )
+        if crs is not None and src.crs is not None and str(src.crs) != str(crs):
+            gdf = gdf.to_crs(crs)
+        return gdf
+
+    # ------------------------------------------------------------------
+    def save_geojson(
+        self,
+        path: str,
+        *,
+        crs: str = "EPSG:4326",
+        driver: str = "GeoJSON",
+    ) -> None:
+        """Write the deformed cartogram to a GeoJSON (or any OGR driver).
+
+        Default CRS ``"EPSG:4326"`` matches the GeoJSON spec (lon/lat)
+        so the file drops cleanly into QGIS, D3, Leaflet, Mapbox, and
+        similar tooling. Pass ``driver="GPKG"`` plus a ``.gpkg``
+        extension to write a GeoPackage instead.
+        """
+        gdf = self.to_gdf(crs=crs)
+        gdf.to_file(path, driver=driver)
+
 
 def world_cartogram(
     metric: Metric,

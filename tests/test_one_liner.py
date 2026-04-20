@@ -198,3 +198,46 @@ def test_missing_countries_grey_keeps_row(fake_world):
     assert missing.iloc[0]["value"] == 0.0
     # Polygon warp ran for both rows.
     assert len(result.deformed_geometries) == 2
+
+
+def test_to_gdf_preserves_columns_and_reprojects(fake_world):
+    from cartogram import world_cartogram
+
+    result = world_cartogram(
+        "population",
+        grid_size=(64, 128),
+        render=False,
+        performance_goal="quality",
+    )
+
+    # Same CRS as source, with the deformed geometries attached.
+    gdf_native = result.to_gdf()
+    assert str(gdf_native.crs) == str(result.world_map.gdf.crs)
+    assert "value" in gdf_native.columns
+    assert "ISO_A3" in gdf_native.columns
+    assert len(gdf_native) == len(result.world_map.gdf)
+    # Geometries should come from the deformed list, not the geographic one.
+    assert gdf_native.geometry.iloc[0].equals(result.deformed_geometries[0])
+
+    # Source is EPSG:4326 in the fake world, so asking for the same CRS
+    # yields an identity output; a different CRS triggers reprojection.
+    gdf_wgs = result.to_gdf(crs="EPSG:4326")
+    assert str(gdf_wgs.crs) == "EPSG:4326"
+
+
+def test_save_geojson_roundtrip(tmp_path, fake_world):
+    gpd = pytest.importorskip("geopandas")
+    from cartogram import world_cartogram
+
+    result = world_cartogram(
+        "population",
+        grid_size=(64, 128),
+        render=False,
+        performance_goal="quality",
+    )
+    out = tmp_path / "cart.geojson"
+    result.save_geojson(str(out))
+    assert out.exists()
+    round_tripped = gpd.read_file(out)
+    assert len(round_tripped) == len(result.world_map.gdf)
+    assert "value" in round_tripped.columns
