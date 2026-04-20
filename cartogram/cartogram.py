@@ -264,36 +264,68 @@ class Cartogram:
         Because the deformation is a homeomorphism, the topology of each
         polygon is preserved (no self-intersection on well-resolved
         inputs). Holes are preserved.
+
+        Implementation is vectorised: every polygon's coordinates are
+        stacked into a single ``(N, 2)`` array, transformed by one
+        pair of bilinear-sampler calls, then stitched back into the
+        original geometry shapes via :func:`shapely.set_coordinates`.
+        On a world-map-sized input this is many times faster than the
+        per-ring loop it replaces.
         """
-        from shapely.geometry import Polygon, MultiPolygon
-        from shapely.geometry.polygon import orient
+        import shapely
         from shapely import segmentize
+        from shapely.geometry import MultiPolygon, Polygon
+        from shapely.geometry.polygon import orient
 
         if max_edge is None:
             max_edge = min(self.solver.dx, self.solver.dy)
 
-        def _transform_ring(coords: Iterable[Tuple[float, float]]) -> list:
-            arr = np.asarray(list(coords), dtype=float)
-            if arr.ndim != 2 or arr.shape[1] < 2:
-                return []
-            arr = arr[:, :2]
-            moved = self.transform(arr)
-            return [tuple(p) for p in moved]
+        if self._final_grid_points is None:
+            raise RuntimeError(
+                "Cartogram.run() must be called before transform_polygons()"
+            )
 
-        def _transform_one(poly: Polygon) -> Polygon:
-            shell = _transform_ring(poly.exterior.coords)
-            holes = [_transform_ring(h.coords) for h in poly.interiors]
-            return orient(Polygon(shell, holes))
-
-        out = []
-        for geom in polygons:
-            dense = segmentize(geom, max_edge)
-            if isinstance(dense, MultiPolygon):
-                out.append(MultiPolygon([_transform_one(p) for p in dense.geoms]))
-            elif isinstance(dense, Polygon):
-                out.append(_transform_one(dense))
-            else:
+        geoms = list(polygons)
+        for geom in geoms:
+            if not isinstance(geom, (Polygon, MultiPolygon)):
                 raise TypeError(
                     f"expected Polygon or MultiPolygon, got {type(geom).__name__}"
                 )
-        return out
+
+        # Shapely 2.0: segmentize operates on arrays directly.
+        dense = np.asarray(
+            [segmentize(g, max_edge) for g in geoms], dtype=object
+        )
+
+        # One call to fetch every vertex in the batch.
+        all_coords = shapely.get_coordinates(dense)   # (N, 2)
+        if all_coords.size == 0:
+            return [orient(g) for g in dense]
+
+        # Sample the displacement field in one shot for x and y.
+        ny, nx = self.solver.shape
+        xs, ys = self.solver.grid_coords()
+        disp_x = self._final_grid_points[:, 0].reshape(ny, nx)
+        disp_y = self._final_grid_points[:, 1].reshape(ny, nx)
+        from .advect import _bilinear_sample
+
+        moved = np.empty_like(all_coords)
+        moved[:, 0] = _bilinear_sample(
+            disp_x, xs, ys, all_coords[:, 0], all_coords[:, 1]
+        )
+        moved[:, 1] = _bilinear_sample(
+            disp_y, xs, ys, all_coords[:, 0], all_coords[:, 1]
+        )
+
+        # Stitch the transformed coordinates back onto the (segmentised)
+        # geometry structure. set_coordinates preserves ring and
+        # multi-polygon layout; we just need to re-orient at the end
+        # so exterior rings stay CCW (matplotlib/QGIS assume that).
+        rebuilt = shapely.set_coordinates(dense.copy(), moved)
+
+        def _orient_any(g):
+            if isinstance(g, MultiPolygon):
+                return MultiPolygon([orient(p) for p in g.geoms])
+            return orient(g)
+
+        return [_orient_any(g) for g in rebuilt]
