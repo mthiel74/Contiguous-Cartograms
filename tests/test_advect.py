@@ -99,3 +99,49 @@ def test_speed_mode_is_default():
     corners = np.array([[0, 0], [1, 0], [1, 1], [0, 1]], dtype=float)
     moved = cart.transform(corners)
     assert np.allclose(moved, corners, atol=2e-2)
+
+
+def test_distortion_grid_shape_and_bounds():
+    """A uniform density field deforms the grid by nothing; so a
+    distortion_grid call should reproduce the original regular grid
+    to within advection round-off."""
+    rho = np.ones((16, 16))
+    cart = Cartogram(rho, bbox=(0, 0, 1.0, 1.0))
+    cart.run(tol=1e-3)
+    lines = cart.distortion_grid(n_lon=6, n_lat=5)
+    # 6 verticals + 5 horizontals = 11 polylines.
+    assert len(lines) == 11
+    all_pts = np.vstack(lines)
+    # Every vertex lies inside the unit square.
+    assert all_pts.min() >= -1e-3
+    assert all_pts.max() <= 1.0 + 1e-3
+
+
+def test_distortion_grid_reacts_to_dense_block():
+    """A dense central block pushes mass outward. Grid lines that do
+    NOT pass through the line of symmetry should bend visibly. Symmetric
+    lines (the central horizontal at y=0.5 and central vertical at
+    x=0.5) stay straight and are therefore not a useful test."""
+    rho = np.ones((48, 48))
+    rho[18:30, 18:30] = 9.0
+    cart = Cartogram(rho, bbox=(0, 0, 1.0, 1.0))
+    cart.run(tol=1e-3, performance_goal="quality")
+    lines = cart.distortion_grid(n_lon=9, n_lat=9)
+
+    # Horizontals come first; index 2 is y=0.25, off the centre line.
+    # The point at x=0.5 is directly below the dense block, gets pushed
+    # downward more than the endpoints. So y-values should bend.
+    off_centre_h = lines[2]
+    y_spread = off_centre_h[:, 1].ptp()
+    assert y_spread > 0.01, (
+        "off-centre horizontal did not bend: ptp = "
+        f"{y_spread}"
+    )
+
+
+def test_distortion_grid_requires_run():
+    rho = np.ones((8, 8))
+    cart = Cartogram(rho, bbox=(0, 0, 1.0, 1.0))
+    import pytest
+    with pytest.raises(RuntimeError, match="run"):
+        cart.distortion_grid()

@@ -19,6 +19,59 @@ import numpy as np
 GREY = "#d9d9d9"
 
 
+def plot_distortion_grid(
+    cart,
+    ax=None,
+    *,
+    n_lon: int = 25,
+    n_lat: int = 13,
+    color: str = "#d23a2a",
+    linewidth: float = 0.8,
+    alpha: float = 0.85,
+):
+    """Overlay a warped regular lat/lon grid on an existing axis.
+
+    Identical semantics to the Wolfram port's
+    ``CartogramDistortionGrid[cart]`` / overlay pattern. If ``ax`` is
+    not given a new figure is created.
+
+    Parameters
+    ----------
+    cart : Cartogram
+        Must have had ``.run()`` called.
+    ax : matplotlib.axes.Axes, optional
+        Axis to draw on. Default: a new figure.
+    n_lon, n_lat : int
+        Grid resolution (number of verticals and horizontals).
+    color, linewidth, alpha :
+        Line style forwarded to ``LineCollection``.
+
+    Returns
+    -------
+    (fig, ax, collection)
+        Matplotlib objects, in case the caller wants to tweak further.
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import LineCollection
+
+    lines = cart.distortion_grid(n_lon=n_lon, n_lat=n_lat)
+    segments = [line for line in lines]   # list[(M, 2)]
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
+        ax.set_aspect("equal")
+        ax.set_xticks([]); ax.set_yticks([])
+    else:
+        fig = ax.figure
+
+    lc = LineCollection(
+        segments, colors=color, linewidths=linewidth, alpha=alpha,
+    )
+    ax.add_collection(lc)
+    ax.autoscale_view()
+    return fig, ax, lc
+
+
 def side_by_side(
     gdf,
     deformed: Iterable,

@@ -154,6 +154,76 @@ class Cartogram:
             raise ValueError("points must have shape (N, 2)")
         return _inverse_transform(self, points)
 
+    def distortion_grid(
+        self,
+        n_lon: int = 25,
+        n_lat: int = 13,
+        max_edge: float | None = None,
+    ) -> list:
+        """Return the regular ``(n_lon, n_lat)`` lat/lon grid warped.
+
+        Produces the same visualisation as the Wolfram port's
+        ``CartogramDistortionGrid[cart]``: a list of line-strings, one
+        per grid line (horizontals + verticals), each already
+        transformed through the cartogram deformation. Wrap in
+        ``matplotlib.collections.LineCollection`` or convert to a
+        GeoDataFrame for plotting.
+
+        Parameters
+        ----------
+        n_lon : int
+            Number of vertical grid lines (columns).
+        n_lat : int
+            Number of horizontal grid lines (rows).
+        max_edge : float, optional
+            Densification threshold in physical units, so every line
+            follows the flow smoothly rather than jumping across
+            high-gradient regions in a single straight step. Defaults
+            to one grid cell.
+
+        Returns
+        -------
+        list[np.ndarray]
+            Each element is an ``(M, 2)`` array of ``(x, y)``
+            coordinates describing a polyline on the cartogram.
+        """
+        if self._final_grid_points is None:
+            raise RuntimeError(
+                "Cartogram.run() must be called before distortion_grid()"
+            )
+        if n_lon < 2 or n_lat < 2:
+            raise ValueError("n_lon and n_lat must both be >= 2")
+
+        xmin, ymin, xmax, ymax = self.bbox
+        if max_edge is None:
+            max_edge = min(self.solver.dx, self.solver.dy)
+
+        xs = np.linspace(xmin, xmax, n_lon)
+        ys = np.linspace(ymin, ymax, n_lat)
+
+        def _densify(line: np.ndarray) -> np.ndarray:
+            out = [line[0]]
+            for a, b in zip(line[:-1], line[1:]):
+                seg = b - a
+                d = float(np.linalg.norm(seg))
+                k = max(1, int(np.ceil(d / max_edge)))
+                for s in range(1, k + 1):
+                    out.append(a + seg * (s / k))
+            return np.asarray(out, dtype=float)
+
+        lines: list = []
+        # horizontals
+        for y in ys:
+            line = np.column_stack([xs, np.full_like(xs, y)])
+            dense = _densify(line)
+            lines.append(self.transform(dense))
+        # verticals
+        for x in xs:
+            line = np.column_stack([np.full_like(ys, x), ys])
+            dense = _densify(line)
+            lines.append(self.transform(dense))
+        return lines
+
     def transform(self, points: np.ndarray) -> np.ndarray:
         """Map ``points`` from original to cartogram coordinates.
 
