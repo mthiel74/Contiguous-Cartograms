@@ -24,6 +24,8 @@ __all__ = [
     "WorldCartogramResult",
     "side_by_side",
     "plot_distortion_grid",
+    "CartogramConfig",
+    "run_config",
 ]
 
 
@@ -48,6 +50,12 @@ def __getattr__(name: str):
     if name == "plot_distortion_grid":
         from .render import plot_distortion_grid
         return plot_distortion_grid
+    if name == "CartogramConfig":
+        from .config import CartogramConfig
+        return CartogramConfig
+    if name == "run_config":
+        from .config import run_config
+        return run_config
     raise AttributeError(f"module 'cartogram' has no attribute {name!r}")
 
 __version__ = "0.1.0"
